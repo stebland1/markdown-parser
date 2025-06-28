@@ -1,2 +1,4 @@
-bin/
+build/
 test.md
+
+compile_commands.json
