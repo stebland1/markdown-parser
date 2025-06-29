@@ -43,6 +43,9 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
+  Entry entries[MAX_ENTRIES];
+  int entry_count = 0;
+
   int in_front_matter = 0;
   char line[MAX_LINES];
 
@@ -57,15 +60,18 @@ int main(int argc, char **argv) {
       }
     }
 
-    Entry entries[MAX_ENTRIES];
-    int entry_count = 0;
-
     if (in_front_matter &&
         parse_front_matter(&entries[entry_count], line) == 0) {
-      printf("%s: %s\n", entries[entry_count].key, entries[entry_count].value);
       entry_count++;
     }
   }
+
+  printf("{");
+  for (int i = 0; i < entry_count; i++) {
+    printf("\"%s\":\"%s\"%s", entries[i].key, entries[i].value,
+           i < entry_count - 1 ? "," : "");
+  }
+  printf("}");
 
   fclose(file);
 }
