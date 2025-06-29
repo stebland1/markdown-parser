@@ -52,10 +52,8 @@ int main(int argc, char **argv) {
   while (fgets(line, sizeof(line), file)) {
     if (strncmp("---", line, 3) == 0) {
       if (in_front_matter) {
-        printf("Finished processing front matter.\n");
         break;
       } else {
-        printf("Processing front matter...\n");
         in_front_matter = 1;
       }
     }
