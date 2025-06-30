@@ -87,6 +87,15 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   return 0;
 }
 
+void print_front_matter(FrontMatterList *list) {
+  printf("{\n");
+  for (size_t i = 0; i < list->count; i++) {
+    printf("  \"%s\": \"%s\"%s\n", list->entries[i].key, list->entries[i].value,
+           i < list->count - 1 ? "," : "");
+  }
+  printf("}\n");
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "Invalid argument count: provided %d, expected 1\n",
@@ -131,13 +140,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("{\n");
-  for (size_t i = 0; i < list->count; i++) {
-    printf("  \"%s\": \"%s\"%s\n", list->entries[i].key, list->entries[i].value,
-           i < list->count - 1 ? "," : "");
-  }
-  printf("}\n");
+  print_front_matter(list);
+  free_front_matter_list(list);
 
   fclose(file);
-  free_front_matter_list(list);
 }
