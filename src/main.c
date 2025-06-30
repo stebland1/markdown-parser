@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     if (in_front_matter && parse_front_matter_entry(&entry, line) == 0) {
       if (insert_front_matter_entry(list, &entry)) {
         fprintf(stderr, "Failed to insert front matter entry\n");
-        free(list);
+        free_front_matter_list(list);
         fclose(file);
         return EXIT_FAILURE;
       }
