@@ -68,7 +68,8 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
 
 int main(int argc, char **argv) {
   if (argc != 2) {
-    printf("Invalid argument count: provided %d, expected 1\n", argc - 1);
+    fprintf(stderr, "Invalid argument count: provided %d, expected 1\n",
+            argc - 1);
     return EXIT_FAILURE;
   }
 
@@ -76,13 +77,13 @@ int main(int argc, char **argv) {
   FILE *file = fopen(path, "r");
 
   if (file == NULL) {
-    printf("Failed to open file: %s\n", path);
+    fprintf(stderr, "Failed to open file: %s\n", path);
     return EXIT_FAILURE;
   }
 
   FrontMatterList *list = create_front_matter_list();
   if (!list) {
-    printf("Failed to create front matter list\n");
+    fprintf(stderr, "Failed to create front matter list\n");
     fclose(file);
     return EXIT_FAILURE;
   }
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
     FrontMatterEntry entry;
     if (in_front_matter && parse_front_matter_entry(&entry, line) == 0) {
       if (insert_front_matter_entry(list, &entry)) {
-        printf("Failed to insert front matter entry\n");
+        fprintf(stderr, "Failed to insert front matter entry\n");
         free(list);
         fclose(file);
         return EXIT_FAILURE;
