@@ -6,7 +6,6 @@
 #include <sys/types.h>
 
 #define MAX_LINES 256
-#define MAX_ENTRIES 50
 
 typedef struct {
   char key[64];
