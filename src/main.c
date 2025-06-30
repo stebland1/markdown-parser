@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,9 +11,45 @@
 typedef struct {
   char key[64];
   char value[256];
-} Entry;
+} FrontMatterEntry;
 
-int parse_front_matter(Entry *cur, char *line) {
+typedef struct {
+  FrontMatterEntry *entries;
+  size_t count;
+  size_t capacity;
+} FrontMatterList;
+
+// now i want to create this list.
+FrontMatterList *create_front_matter_list() {
+  FrontMatterList *list = malloc(sizeof(FrontMatterList));
+  list->capacity = 8;
+  list->count = 0;
+  list->entries = malloc(sizeof(FrontMatterEntry) * list->capacity);
+  return list;
+}
+
+void free_front_matter_list(FrontMatterList *list) {
+  if (list) {
+    free(list->entries);
+    free(list);
+  }
+}
+
+int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry) {
+  if (list->count + 1 > list->capacity) {
+    list->capacity += 8;
+    list->entries =
+        realloc(list->entries, sizeof(FrontMatterEntry) * list->capacity);
+    if (!list->entries) {
+      return -1;
+    }
+  }
+
+  list->entries[list->count++] = *entry;
+  return 0;
+}
+
+int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   char *delimiter = strchr(line, ':');
   if (delimiter == NULL) {
     return -1;
@@ -43,12 +80,15 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Entry entries[MAX_ENTRIES];
-  int entry_count = 0;
+  FrontMatterList *list = create_front_matter_list();
+  if (!list) {
+    printf("Failed to create front matter list\n");
+    fclose(file);
+    return EXIT_FAILURE;
+  }
 
   int in_front_matter = 0;
   char line[MAX_LINES];
-
   while (fgets(line, sizeof(line), file)) {
     if (strncmp("---", line, 3) == 0) {
       if (in_front_matter) {
@@ -58,18 +98,24 @@ int main(int argc, char **argv) {
       }
     }
 
-    if (in_front_matter &&
-        parse_front_matter(&entries[entry_count], line) == 0) {
-      entry_count++;
+    FrontMatterEntry entry;
+    if (in_front_matter && parse_front_matter_entry(&entry, line) == 0) {
+      if (insert_front_matter_entry(list, &entry)) {
+        printf("Failed to insert front matter entry\n");
+        free(list);
+        fclose(file);
+        return EXIT_FAILURE;
+      }
     }
   }
 
   printf("{");
-  for (int i = 0; i < entry_count; i++) {
-    printf("\"%s\":\"%s\"%s", entries[i].key, entries[i].value,
-           i < entry_count - 1 ? "," : "");
+  for (size_t i = 0; i < list->count; i++) {
+    printf("\"%s\":\"%s\"%s", list->entries[i].key, list->entries[i].value,
+           i < list->count - 1 ? "," : "");
   }
   printf("}");
 
   fclose(file);
+  free_front_matter_list(list);
 }
