@@ -19,7 +19,6 @@ typedef struct {
   size_t capacity;
 } FrontMatterList;
 
-// now i want to create this list.
 FrontMatterList *create_front_matter_list() {
   FrontMatterList *list = malloc(sizeof(FrontMatterList));
   list->capacity = 8;
