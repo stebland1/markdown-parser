@@ -1,4 +1,5 @@
 build/
+.cache/
 test.md
 
 compile_commands.json
