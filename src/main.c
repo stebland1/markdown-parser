@@ -20,9 +20,18 @@ typedef struct {
 
 FrontMatterList *create_front_matter_list() {
   FrontMatterList *list = malloc(sizeof(FrontMatterList));
+  if (!list) {
+    return NULL;
+  }
+
   list->capacity = 8;
   list->count = 0;
   list->entries = malloc(sizeof(FrontMatterEntry) * list->capacity);
+  if (!list->entries) {
+    free(list);
+    return NULL;
+  }
+
   return list;
 }
 
