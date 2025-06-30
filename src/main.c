@@ -117,12 +117,12 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("{");
+  printf("{\n");
   for (size_t i = 0; i < list->count; i++) {
-    printf("\"%s\":\"%s\"%s", list->entries[i].key, list->entries[i].value,
+    printf("  \"%s\": \"%s\"%s\n", list->entries[i].key, list->entries[i].value,
            i < list->count - 1 ? "," : "");
   }
-  printf("}");
+  printf("}\n");
 
   fclose(file);
   free_front_matter_list(list);
