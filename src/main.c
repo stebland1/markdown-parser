@@ -64,11 +64,25 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
 
   *delimiter = '\0';
   trim(line);
-  strcpy(cur->key, line);
+  char *escaped_key = escape_json_str(line);
+  if (!escaped_key) {
+    return -1;
+  }
+
+  strcpy(cur->key, escaped_key);
   char *value = delimiter + 1;
   value[strcspn(value, "\n")] = '\0';
   trim(value);
-  strcpy(cur->value, value);
+
+  char *escaped_val = escape_json_str(value);
+  if (!escaped_val) {
+    free(escaped_key);
+    return -1;
+  }
+
+  strcpy(cur->value, escaped_val);
+  free(escaped_key);
+  free(escaped_val);
 
   return 0;
 }
