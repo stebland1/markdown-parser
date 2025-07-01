@@ -6,6 +6,11 @@
 #include <sys/types.h>
 
 #define MAX_LINES 256
+#define INITIAL_FM_CAPACITY 8
+
+#define PARSE_ERROR -1
+#define PARSE_SKIP 1
+#define PARSE_OK 0
 
 typedef struct {
   char key[64];
@@ -24,7 +29,7 @@ FrontMatterList *create_front_matter_list() {
     return NULL;
   }
 
-  list->capacity = 8;
+  list->capacity = INITIAL_FM_CAPACITY;
   list->count = 0;
   list->entries = malloc(sizeof(FrontMatterEntry) * list->capacity);
   if (!list->entries) {
@@ -44,7 +49,7 @@ void free_front_matter_list(FrontMatterList *list) {
 
 int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry) {
   if (list->count + 1 > list->capacity) {
-    list->capacity += 8;
+    list->capacity += INITIAL_FM_CAPACITY;
     list->entries =
         realloc(list->entries, sizeof(FrontMatterEntry) * list->capacity);
     if (!list->entries) {
@@ -59,14 +64,14 @@ int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry) {
 int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   char *delimiter = strchr(line, ':');
   if (delimiter == NULL) {
-    return -1;
+    return PARSE_SKIP;
   }
 
   *delimiter = '\0';
   trim(line);
   char *escaped_key = escape_json_str(line);
   if (!escaped_key) {
-    return -1;
+    return PARSE_ERROR;
   }
 
   strcpy(cur->key, escaped_key);
@@ -77,14 +82,14 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   char *escaped_val = escape_json_str(value);
   if (!escaped_val) {
     free(escaped_key);
-    return -1;
+    return PARSE_ERROR;
   }
 
   strcpy(cur->value, escaped_val);
   free(escaped_key);
   free(escaped_val);
 
-  return 0;
+  return PARSE_OK;
 }
 
 void print_front_matter(FrontMatterList *list) {
@@ -129,19 +134,30 @@ int main(int argc, char **argv) {
       }
     }
 
+    if (!in_front_matter)
+      continue;
+
     FrontMatterEntry entry;
-    if (in_front_matter && parse_front_matter_entry(&entry, line) == 0) {
-      if (insert_front_matter_entry(list, &entry)) {
-        fprintf(stderr, "Failed to insert front matter entry\n");
-        free_front_matter_list(list);
-        fclose(file);
-        return EXIT_FAILURE;
-      }
+    switch (parse_front_matter_entry(&entry, line)) {
+    case PARSE_SKIP:
+      continue;
+    case PARSE_ERROR:
+      goto fail;
+    }
+
+    if (insert_front_matter_entry(list, &entry) < 0) {
+      fprintf(stderr, "Failed to insert front matter entry\n");
+      goto fail;
     }
   }
 
   print_front_matter(list);
   free_front_matter_list(list);
-
   fclose(file);
+  return EXIT_SUCCESS;
+
+fail:
+  free_front_matter_list(list);
+  fclose(file);
+  return EXIT_FAILURE;
 }
