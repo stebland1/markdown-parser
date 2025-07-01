@@ -88,12 +88,12 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
 }
 
 void print_front_matter(FrontMatterList *list) {
-  printf("{\n");
+  printf("{");
   for (size_t i = 0; i < list->count; i++) {
-    printf("  \"%s\": \"%s\"%s\n", list->entries[i].key, list->entries[i].value,
+    printf("\"%s\": \"%s\"%s", list->entries[i].key, list->entries[i].value,
            i < list->count - 1 ? "," : "");
   }
-  printf("}\n");
+  printf("}");
 }
 
 int main(int argc, char **argv) {
