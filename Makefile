@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -I./include
 BIN_DIR = build
 TARGET = $(BIN_DIR)/mdparser
-SRC = src/main.c src/utils.c
+SRC = src/main.c src/front_matter.c src/utils.c
 
 all: $(TARGET)
 
