@@ -121,6 +121,45 @@ void print_front_matter(FrontMatterList *list) {
   printf("}");
 }
 
+char *get_list_item(char *line) {
+  if (!isspace(*line))
+    return NULL;
+
+  char *p = line;
+  while (isspace(*p))
+    p++;
+  if (*p++ != '-')
+    return NULL;
+  while (isspace(*p))
+    p++;
+
+  p[strcspn(p, "\n")] = '\0';
+  trim(p);
+  return p;
+}
+
+int add_list_item(FrontMatterEntry *entry, char *item) {
+  if (entry->list_value.count == entry->list_value.capacity) {
+    entry->list_value.capacity += LIST_VALUE_CAPACITY_BUF;
+    entry->list_value.items = (char **)realloc(
+        entry->list_value.items, entry->list_value.capacity * sizeof(char *));
+
+    if (!entry->list_value.items) {
+      fprintf(stderr, "Failed to allocate for list items\n");
+      return -1;
+    }
+  }
+
+  char *escaped_list_item = escape_json_str(item);
+  if (!escaped_list_item) {
+    fprintf(stderr, "Failed to allocate for list item\n");
+    return -1;
+  }
+
+  entry->list_value.items[entry->list_value.count++] = escaped_list_item;
+  return 0;
+}
+
 int parse_front_matter_file(FILE *file, FrontMatterList *list) {
   int in_front_matter = 0;
   int is_list = 0;
@@ -139,42 +178,14 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
       continue;
 
     if (is_list) {
-      if (isspace(*line)) {
-        char *p = line;
-        while (isspace(*p))
-          p++;
-        if (*p == '-') {
-          p++;
-          while (isspace(*p))
-            p++;
-
-          FrontMatterEntry *list_entry = &list->entries[list->count - 1];
-          if (list_entry->list_value.count == list_entry->list_value.capacity) {
-            list_entry->list_value.capacity += LIST_VALUE_CAPACITY_BUF;
-            list_entry->list_value.items = (char **)realloc(
-                list_entry->list_value.items,
-                list_entry->list_value.capacity * sizeof(char *));
-
-            if (!list_entry->list_value.items) {
-              fprintf(stderr, "Failed to allocate for list items\n");
-              return -1;
-            }
-          }
-
-          char *list_item = p;
-          list_item[strcspn(list_item, "\n")] = '\0';
-          trim(list_item);
-          char *escaped_list_item = escape_json_str(list_item);
-          if (!escaped_list_item) {
-            fprintf(stderr, "Failed to allocate for list item\n");
-            return -1;
-          }
-          list_entry->list_value.items[list_entry->list_value.count++] =
-              escaped_list_item;
-          continue;
-        } else {
-          is_list = 0;
+      char *list_item = get_list_item(line);
+      if (list_item) {
+        FrontMatterEntry *list_entry = &list->entries[list->count - 1];
+        if (add_list_item(list_entry, list_item) < 0) {
+          fprintf(stderr, "Failed to add list item\n");
+          return -1;
         }
+        continue;
       } else {
         is_list = 0;
       }
