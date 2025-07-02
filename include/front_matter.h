@@ -1,5 +1,6 @@
 #ifndef FRONT_MATTER_H
 #include <stddef.h>
+#include <stdio.h>
 
 #define FRONT_MATTER_H
 
@@ -31,5 +32,6 @@ void free_front_matter_list(FrontMatterList *list);
 int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry);
 int parse_front_matter_entry(FrontMatterEntry *cur, char *line);
 void print_front_matter(FrontMatterList *list);
+int parse_front_matter_file(FILE *file, FrontMatterList *list);
 
 #endif
