@@ -27,6 +27,12 @@ typedef struct {
   size_t capacity;
 } FrontMatterList;
 
+typedef enum {
+  OUTSIDE,
+  IN_FRONT_MATTER,
+  IN_LIST,
+} ParseState;
+
 FrontMatterList *create_front_matter_list();
 void free_front_matter_list(FrontMatterList *list);
 int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry);

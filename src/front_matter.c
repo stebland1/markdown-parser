@@ -161,27 +161,28 @@ int add_list_item(FrontMatterEntry *entry, char *item) {
 }
 
 int parse_front_matter_file(FILE *file, FrontMatterList *list) {
-  int parsing_front_matter = 0;
-  int parsing_list = 0;
+  ParseState state = OUTSIDE;
   char line[MAX_LINES];
 
   while (fgets(line, sizeof(line), file)) {
     trim(line);
-    if (*line == '\0')
-      continue;
+
+    if (state == OUTSIDE) {
+      if (*line == '\0')
+        continue;
+      if (strcmp(line, "---") == 0) {
+        state = IN_FRONT_MATTER;
+        continue;
+      } else {
+        break;
+      }
+    }
 
     if (strcmp(line, "---") == 0) {
-      if (parsing_front_matter) {
-        break;
-      } else {
-        parsing_front_matter = 1;
-        continue;
-      }
-    } else if (!parsing_front_matter) {
       break;
     }
 
-    if (parsing_list) {
+    if (state == IN_LIST) {
       char *list_item = get_list_item(line);
       if (list_item) {
         FrontMatterEntry *list_entry = &list->entries[list->count - 1];
@@ -191,7 +192,7 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
         }
         continue;
       } else {
-        parsing_list = 0;
+        state = IN_FRONT_MATTER;
       }
     }
 
@@ -203,11 +204,11 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
       return -1;
     }
 
-    if (entry.type == LIST_VAL && !parsing_list) {
+    if (entry.type == LIST_VAL && state != IN_LIST) {
       entry.list_value.items = NULL;
       entry.list_value.count = 0;
       entry.list_value.capacity = 0;
-      parsing_list = 1;
+      state = IN_LIST;
     }
 
     if (insert_front_matter_entry(list, &entry) < 0) {
