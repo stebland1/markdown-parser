@@ -161,23 +161,27 @@ int add_list_item(FrontMatterEntry *entry, char *item) {
 }
 
 int parse_front_matter_file(FILE *file, FrontMatterList *list) {
-  int in_front_matter = 0;
-  int is_list = 0;
+  int parsing_front_matter = 0;
+  int parsing_list = 0;
   char line[MAX_LINES];
 
   while (fgets(line, sizeof(line), file)) {
-    if (strncmp("---", line, 3) == 0) {
-      if (in_front_matter) {
-        break;
-      } else {
-        in_front_matter = 1;
-      }
-    }
-
-    if (!in_front_matter)
+    trim(line);
+    if (*line == '\0')
       continue;
 
-    if (is_list) {
+    if (strcmp(line, "---") == 0) {
+      if (parsing_front_matter) {
+        break;
+      } else {
+        parsing_front_matter = 1;
+        continue;
+      }
+    } else if (!parsing_front_matter) {
+      break;
+    }
+
+    if (parsing_list) {
       char *list_item = get_list_item(line);
       if (list_item) {
         FrontMatterEntry *list_entry = &list->entries[list->count - 1];
@@ -187,7 +191,7 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
         }
         continue;
       } else {
-        is_list = 0;
+        parsing_list = 0;
       }
     }
 
@@ -199,11 +203,11 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
       return -1;
     }
 
-    if (entry.type == LIST_VAL && !is_list) {
+    if (entry.type == LIST_VAL && !parsing_list) {
       entry.list_value.items = NULL;
       entry.list_value.count = 0;
       entry.list_value.capacity = 0;
-      is_list = 1;
+      parsing_list = 1;
     }
 
     if (insert_front_matter_entry(list, &entry) < 0) {
