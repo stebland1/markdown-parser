@@ -1,3 +1,4 @@
+#include "markdown.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,7 +21,12 @@ int main(int argc, char **argv) {
   }
 
   char line[MAX_LINE];
+  int in_front_matter = 0;
+
   while (fgets(line, sizeof(line), file)) {
+    if (skip_line(line, &in_front_matter) == 1) {
+      continue;
+    }
   }
 
   fclose(file);
