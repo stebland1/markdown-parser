@@ -1,0 +1,171 @@
+#include "markdown.h"
+#include "stack.h"
+#include "token.h"
+#include <ctype.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define FRONT_MATTER_DELIM "---"
+#define PARAGRAPH_GROWTH_FACTOR 4
+
+int is_front_matter(char *line, int *in_front_matter) {
+  if (!*in_front_matter && strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
+    *in_front_matter = 1;
+    return 1;
+  }
+
+  if (*in_front_matter) {
+    if (strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
+      *in_front_matter = 0;
+    }
+    return 1;
+  }
+
+  return 0;
+}
+
+int handle_heading(char *line, Token *ast) {
+  Token *heading = NULL;
+  if (parse_heading(line, &heading) < 0) {
+    return -1;
+  }
+
+  if (add_child_to_token(ast, heading)) {
+    free(heading);
+    return -1;
+  }
+
+  return 0;
+}
+
+int handle_paragraph(char *line, Stack *stack) {
+  Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
+  if (!paragraph) {
+    return -1;
+  }
+
+  if (push(stack, &paragraph) < 0) {
+    free_token(paragraph);
+    return -1;
+  }
+
+  return 0;
+}
+
+int handle_blank_line(Stack *block_stack, Token *ast) {
+  Token **stack_top_ptr = peek_stack(block_stack);
+  if (!stack_top_ptr) {
+    return -1;
+  }
+
+  Token *stack_top = *stack_top_ptr;
+  // Ensures we don't pop the root AST node from the stack.
+  if (stack_top->type == DOCUMENT) {
+    return 0;
+  }
+
+  if (pop(block_stack, &stack_top) < 0) {
+    return -1;
+  }
+
+  if (add_child_to_token(ast, stack_top) < 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+int handle_text(char *line, Token *token) {
+  size_t old_len = strlen(token->content);
+  size_t new_len = old_len + 1 + strlen(line) + 1;
+
+  char *new_content = realloc(token->content, new_len);
+  if (!new_content) {
+    return -1;
+  }
+
+  token->content = new_content;
+  token->content[old_len] = '\n';
+  strcpy(token->content + old_len + 1, line);
+
+  printf("New content = %s\n", token->content);
+
+  return 0;
+}
+
+int parse_heading(char *s, Token **out) {
+  *out = NULL;
+
+  unsigned char level = 1;
+  s++;
+  while (*s == '#') {
+    level++;
+    s++;
+  }
+  while (isspace(*s))
+    s++;
+  Token *token = create_token(HEADING, 0, s);
+  if (!token) {
+    return -1;
+  }
+  token->level = level;
+  *out = token;
+
+  return 0;
+}
+
+void print_ast(Token *root, int level) {
+  if (!root) {
+    return;
+  }
+
+  for (size_t i = 0; i < level; i++) {
+    printf("\t");
+  }
+
+  char *type;
+  switch (root->type) {
+  case HEADING:
+    type = "HEADING";
+    break;
+  case DOCUMENT:
+    type = "DOCUMENT";
+    break;
+  case TEXT:
+    type = "TEXT";
+    break;
+  case PARAGRAPH:
+    type = "PARAGRAPH";
+    break;
+  }
+
+  printf("- type: %s\n", type);
+
+  for (size_t i = 0; i < level; i++) {
+    printf("\t");
+  }
+
+  printf("- content: %s\n", root->content);
+
+  for (size_t i = 0; i < root->child_count; i++) {
+    print_ast(root->children[i], level + 1);
+  }
+}
+
+void free_ast(Token *root) {
+  for (size_t i = 0; i < root->child_count; i++) {
+    free_ast(root->children[i]);
+  }
+
+  if (root->content) {
+    free(root->content);
+  }
+
+  if (root->children) {
+    free(root->children);
+  }
+
+  free(root);
+}
