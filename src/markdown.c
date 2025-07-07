@@ -23,7 +23,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
     line[strcspn(line, "\n")] = '\0';
 
     if (is_blank_line(line)) {
-      if (handle_blank_line(block_stack, ast) < 0) {
+      if (handle_blank_line(block_stack, inline_stack, ast) < 0) {
         return -1;
       }
       continue;
@@ -129,23 +129,38 @@ int handle_paragraph(char *line, Stack *stack) {
   return 0;
 }
 
-int handle_blank_line(Stack *block_stack, Token *ast) {
-  Token **stack_top_ptr = peek_stack(block_stack);
-  if (!stack_top_ptr) {
+int handle_blank_line(Stack *block_stack, Stack *inline_stack, Token *ast) {
+  Token **parent_block_ptr = peek_stack(block_stack);
+  if (!parent_block_ptr) {
     return -1;
   }
 
-  Token *stack_top = *stack_top_ptr;
+  Token *parent_block = *parent_block_ptr;
   // Ensures we don't pop the root AST node from the stack.
-  if (stack_top->type == DOCUMENT) {
+  if (parent_block->type == DOCUMENT) {
     return 0;
   }
 
-  if (pop(block_stack, &stack_top) < 0) {
+  if (pop(block_stack, &parent_block) < 0) {
     return -1;
   }
 
-  if (add_child_to_token(ast, stack_top) < 0) {
+  Stack reversed;
+  // Reverse the inline stack to ensure correct ordering of inline nodes.
+  if (reverse_stack(&reversed, inline_stack) < 0) {
+    return -1;
+  }
+
+  while (!is_stack_empty(&reversed)) {
+    Token *inline_child = NULL;
+    pop(&reversed, &inline_child);
+
+    if (add_child_to_token(parent_block, inline_child) < 0) {
+      return -1;
+    }
+  }
+
+  if (add_child_to_token(ast, parent_block) < 0) {
     return -1;
   }
 
