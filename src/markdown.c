@@ -110,7 +110,7 @@ int handle_inline(char *line, Stack *inline_stack) {
   }
 
   stack_top->content = new_content;
-  stack_top->content[old_len] = '\n';
+  stack_top->content[old_len] = ' ';
   strcpy(stack_top->content + old_len + 1, line);
   return 0;
 }
