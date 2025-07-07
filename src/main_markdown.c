@@ -43,12 +43,14 @@ int main(int argc, char **argv) {
     goto fail;
   }
 
+  // flush what's left in the stack
   while (!is_stack_empty(&block_stack)) {
     Token *top_ptr = NULL;
     if (pop(&block_stack, &top_ptr) < 0) {
       goto fail;
     }
 
+    // don't attach the root node to itself.
     if (top_ptr->type == DOCUMENT) {
       break;
     }
