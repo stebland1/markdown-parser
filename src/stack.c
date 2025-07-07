@@ -61,3 +61,17 @@ void free_stack(Stack *stack) {
 }
 
 int is_stack_empty(Stack *stack) { return stack->count == 0; }
+
+int reverse_stack(Stack *dst, Stack *src) {
+  if (create_stack(dst, src->item_size) < 0) {
+    return -1;
+  }
+
+  while (!is_stack_empty(src)) {
+    void *tok = NULL;
+    pop(src, &tok);
+    push(dst, &tok);
+  }
+
+  return 0;
+}
