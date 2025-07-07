@@ -138,6 +138,8 @@ void free_stack(Stack *stack) {
   stack->capacity = 0;
 }
 
+int is_stack_empty(Stack *stack) { return stack->count == 0; }
+
 int is_blank_line(char *line) {
   while (isspace(*line))
     line++;

@@ -18,6 +18,7 @@ int push(Stack *stack, void *item);
 int pop(Stack *stack, void *out);
 void *peek_stack(Stack *stack);
 void free_stack(Stack *stack);
+int is_stack_empty(Stack *stack);
 int is_blank_line(char *line);
 
 #endif
