@@ -1,6 +1,7 @@
 #include "markdown.h"
 #include "stack.h"
 #include "token.h"
+#include "utils.h"
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -9,6 +10,51 @@
 
 #define FRONT_MATTER_DELIM "---"
 #define PARAGRAPH_GROWTH_FACTOR 4
+#define MAX_LINE 256
+
+int process_file(FILE *file, Stack *block_stack, Token *ast) {
+  char line[MAX_LINE];
+  int in_front_matter = 0;
+  while (fgets(line, sizeof(line), file)) {
+    if (is_front_matter(line, &in_front_matter) == 1)
+      continue;
+    line[strcspn(line, "\n")] = '\0';
+
+    if (is_blank_line(line)) {
+      if (handle_blank_line(block_stack, ast) < 0) {
+        return -1;
+      }
+      continue;
+    }
+
+    if (*line == '#') {
+      if (handle_heading(line, ast) < 0) {
+        return -1;
+      }
+      continue;
+    }
+
+    Token **curblock_ptr = peek_stack(block_stack);
+    if (!curblock_ptr) {
+      return -1;
+    }
+
+    Token *curblock = *curblock_ptr;
+    switch (curblock->type) {
+    case PARAGRAPH:
+      // handle inline elements.
+      break;
+    default: {
+      if (handle_paragraph(line, block_stack) < 0) {
+        return -1;
+      }
+      break;
+    }
+    }
+  }
+
+  return 0;
+}
 
 int is_front_matter(char *line, int *in_front_matter) {
   if (!*in_front_matter && strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {

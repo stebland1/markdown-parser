@@ -1,12 +1,9 @@
 #include "markdown.h"
 #include "stack.h"
 #include "token.h"
-#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#define MAX_LINE 256
 #define INITIAL_DOCUMENT_SIZE 6
 
 int main(int argc, char **argv) {
@@ -42,45 +39,8 @@ int main(int argc, char **argv) {
     goto fail;
   }
 
-  char line[MAX_LINE];
-  int in_front_matter = 0;
-
-  while (fgets(line, sizeof(line), file)) {
-    if (is_front_matter(line, &in_front_matter) == 1)
-      continue;
-    line[strcspn(line, "\n")] = '\0';
-
-    if (is_blank_line(line)) {
-      if (handle_blank_line(&block_stack, ast) < 0) {
-        goto fail;
-      }
-      continue;
-    }
-
-    if (*line == '#') {
-      if (handle_heading(line, ast) < 0) {
-        goto fail;
-      }
-      continue;
-    }
-
-    Token **curblock_ptr = peek_stack(&block_stack);
-    if (!curblock_ptr) {
-      goto fail;
-    }
-
-    Token *curblock = *curblock_ptr;
-    switch (curblock->type) {
-    case PARAGRAPH:
-      // handle inline elements.
-      break;
-    default: {
-      if (handle_paragraph(line, &block_stack) < 0) {
-        goto fail;
-      }
-      break;
-    }
-    }
+  if (process_file(file, &block_stack, ast) < 0) {
+    goto fail;
   }
 
   while (!is_stack_empty(&block_stack)) {

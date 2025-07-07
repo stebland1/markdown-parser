@@ -4,7 +4,9 @@
 #include "stack.h"
 #include "token.h"
 #include <stddef.h>
+#include <stdio.h>
 
+int process_file(FILE *file, Stack *block_stack, Token *ast);
 int is_front_matter(char *line, int *in_front_matter);
 int parse_heading(char *line, Token **out);
 int handle_heading(char *line, Token *ast);
