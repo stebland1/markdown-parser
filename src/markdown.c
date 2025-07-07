@@ -219,7 +219,14 @@ void print_ast(Token *root, int level) {
     printf("\t");
   }
 
-  printf("- content: %s\n", root->content);
+  if (root->content) {
+    printf("- content: %s\n", root->content);
+  }
+
+  for (size_t i = 0; i < level; i++) {
+    printf("\t");
+  }
+  printf("-----------------------\n");
 
   for (size_t i = 0; i < root->child_count; i++) {
     print_ast(root->children[i], level + 1);
