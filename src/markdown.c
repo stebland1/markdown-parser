@@ -12,9 +12,11 @@
 #define PARAGRAPH_GROWTH_FACTOR 4
 #define MAX_LINE 256
 
-int process_file(FILE *file, Stack *block_stack, Token *ast) {
+int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
+                 Token *ast) {
   char line[MAX_LINE];
   int in_front_matter = 0;
+
   while (fgets(line, sizeof(line), file)) {
     if (is_front_matter(line, &in_front_matter) == 1)
       continue;
@@ -42,10 +44,15 @@ int process_file(FILE *file, Stack *block_stack, Token *ast) {
     Token *curblock = *curblock_ptr;
     switch (curblock->type) {
     case PARAGRAPH:
-      // handle inline elements.
+      if (handle_inline(line, inline_stack) < 0) {
+        return -1;
+      }
       break;
     default: {
       if (handle_paragraph(line, block_stack) < 0) {
+        return -1;
+      }
+      if (handle_inline(line, inline_stack) < 0) {
         return -1;
       }
       break;
@@ -86,6 +93,28 @@ int handle_heading(char *line, Token *ast) {
   return 0;
 }
 
+int handle_inline(char *line, Stack *inline_stack) {
+  Token **stack_top_ptr = peek_stack(inline_stack);
+  if (!stack_top_ptr) {
+    Token *text = create_token(TEXT, 0, line);
+    return push(inline_stack, &text) < 0 ? -1 : 0;
+  }
+
+  Token *stack_top = *stack_top_ptr;
+  size_t old_len = stack_top->content ? strlen(stack_top->content) : 0;
+  size_t new_len = old_len + 1 + strlen(line) + 1;
+
+  char *new_content = realloc(stack_top->content, new_len);
+  if (!new_content) {
+    return -1;
+  }
+
+  stack_top->content = new_content;
+  stack_top->content[old_len] = '\n';
+  strcpy(stack_top->content + old_len + 1, line);
+  return 0;
+}
+
 int handle_paragraph(char *line, Stack *stack) {
   Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
   if (!paragraph) {
@@ -119,24 +148,6 @@ int handle_blank_line(Stack *block_stack, Token *ast) {
   if (add_child_to_token(ast, stack_top) < 0) {
     return -1;
   }
-
-  return 0;
-}
-
-int handle_text(char *line, Token *token) {
-  size_t old_len = strlen(token->content);
-  size_t new_len = old_len + 1 + strlen(line) + 1;
-
-  char *new_content = realloc(token->content, new_len);
-  if (!new_content) {
-    return -1;
-  }
-
-  token->content = new_content;
-  token->content[old_len] = '\n';
-  strcpy(token->content + old_len + 1, line);
-
-  printf("New content = %s\n", token->content);
 
   return 0;
 }
