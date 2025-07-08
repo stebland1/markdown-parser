@@ -1,9 +1,11 @@
 #include "markdown.h"
+#include "inline.h"
 #include "stack.h"
 #include "token.h"
 #include "utils.h"
 #include <ctype.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,24 +96,44 @@ int handle_heading(char *line, Token *ast) {
 }
 
 int handle_text(char *line, Stack *inline_stack) {
-  Token **stack_top_ptr = peek_stack(inline_stack);
-  if (!stack_top_ptr) {
-    Token *text = create_token(TEXT, 0, line);
-    return push(inline_stack, &text) < 0 ? -1 : 0;
+  InlineElement **stack_top_ptr = peek_stack(inline_stack);
+  InlineElement *stack_top = stack_top_ptr ? *stack_top_ptr : NULL;
+
+  if (!stack_top || stack_top->token->type != TEXT) {
+    Token *token = create_token(TEXT, 0, line);
+    if (!token) {
+      return -1;
+    }
+
+    InlineElement *elem = malloc(sizeof(InlineElement));
+    if (!elem) {
+      free_token(token);
+      return -1;
+    }
+
+    elem->type = TOKEN;
+    elem->token = token;
+    if (push(inline_stack, &elem) < 0) {
+      free_token(token);
+      free(elem);
+      return -1;
+    }
+
+    return 0;
   }
 
-  Token *stack_top = *stack_top_ptr;
-  size_t old_len = stack_top->content ? strlen(stack_top->content) : 0;
+  size_t old_len =
+      stack_top->token->content ? strlen(stack_top->token->content) : 0;
   size_t new_len = old_len + 1 + strlen(line) + 1;
 
-  char *new_content = realloc(stack_top->content, new_len);
+  char *new_content = realloc(stack_top->token->content, new_len);
   if (!new_content) {
     return -1;
   }
 
-  stack_top->content = new_content;
-  stack_top->content[old_len] = ' ';
-  strcpy(stack_top->content + old_len + 1, line);
+  stack_top->token->content = new_content;
+  stack_top->token->content[old_len] = ' ';
+  strcpy(stack_top->token->content + old_len + 1, line);
   return 0;
 }
 
@@ -152,10 +174,10 @@ int handle_blank_line(Stack *block_stack, Stack *inline_stack, Token *ast) {
   }
 
   while (!is_stack_empty(&reversed)) {
-    Token *inline_child = NULL;
+    InlineElement *inline_child = NULL;
     pop(&reversed, &inline_child);
 
-    if (add_child_to_token(parent_block, inline_child) < 0) {
+    if (add_child_to_token(parent_block, inline_child->token) < 0) {
       return -1;
     }
   }
