@@ -210,6 +210,25 @@ int parse_heading(char *s, Token **out) {
   return 0;
 }
 
+char *get_token_type_str(TokenType token_type) {
+  switch (token_type) {
+  case HEADING:
+    return "HEADING";
+  case DOCUMENT:
+    return "DOCUMENT";
+  case TEXT:
+    return "TEXT";
+  case PARAGRAPH:
+    return "PARAGRAPH";
+  case BOLD:
+    return "BOLD";
+  case ITALIC:
+    return "ITALIC";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 void print_ast(Token *root, int level) {
   if (!root) {
     return;
@@ -219,22 +238,7 @@ void print_ast(Token *root, int level) {
     printf("\t");
   }
 
-  char *type;
-  switch (root->type) {
-  case HEADING:
-    type = "HEADING";
-    break;
-  case DOCUMENT:
-    type = "DOCUMENT";
-    break;
-  case TEXT:
-    type = "TEXT";
-    break;
-  case PARAGRAPH:
-    type = "PARAGRAPH";
-    break;
-  }
-
+  char *type = get_token_type_str(root->type);
   printf("- type: %s\n", type);
 
   for (size_t i = 0; i < level; i++) {
