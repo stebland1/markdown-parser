@@ -99,41 +99,41 @@ int handle_text(char *line, Stack *inline_stack) {
   InlineElement **stack_top_ptr = peek_stack(inline_stack);
   InlineElement *stack_top = stack_top_ptr ? *stack_top_ptr : NULL;
 
-  if (!stack_top || stack_top->token->type != TEXT) {
-    Token *token = create_token(TEXT, 0, line);
-    if (!token) {
+  if (stack_top && stack_top->type == TOKEN && stack_top->token->type == TEXT) {
+    size_t old_len =
+        stack_top->token->content ? strlen(stack_top->token->content) : 0;
+    size_t new_len = old_len + 1 + strlen(line) + 1;
+
+    char *new_content = realloc(stack_top->token->content, new_len);
+    if (!new_content) {
       return -1;
     }
 
-    InlineElement *elem = malloc(sizeof(InlineElement));
-    if (!elem) {
-      free_token(token);
-      return -1;
-    }
-
-    elem->type = TOKEN;
-    elem->token = token;
-    if (push(inline_stack, &elem) < 0) {
-      free_token(token);
-      free(elem);
-      return -1;
-    }
-
+    stack_top->token->content = new_content;
+    stack_top->token->content[old_len] = ' ';
+    strcpy(stack_top->token->content + old_len + 1, line);
     return 0;
   }
 
-  size_t old_len =
-      stack_top->token->content ? strlen(stack_top->token->content) : 0;
-  size_t new_len = old_len + 1 + strlen(line) + 1;
-
-  char *new_content = realloc(stack_top->token->content, new_len);
-  if (!new_content) {
+  Token *token = create_token(TEXT, 0, line);
+  if (!token) {
     return -1;
   }
 
-  stack_top->token->content = new_content;
-  stack_top->token->content[old_len] = ' ';
-  strcpy(stack_top->token->content + old_len + 1, line);
+  InlineElement *elem = malloc(sizeof(InlineElement));
+  if (!elem) {
+    free_token(token);
+    return -1;
+  }
+
+  elem->type = TOKEN;
+  elem->token = token;
+  if (push(inline_stack, &elem) < 0) {
+    free_token(token);
+    free(elem);
+    return -1;
+  }
+
   return 0;
 }
 
