@@ -44,7 +44,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
     Token *curblock = *curblock_ptr;
     switch (curblock->type) {
     case PARAGRAPH:
-      if (handle_inline(line, inline_stack) < 0) {
+      if (handle_text(line, inline_stack) < 0) {
         return -1;
       }
       break;
@@ -52,7 +52,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
       if (handle_paragraph(line, block_stack) < 0) {
         return -1;
       }
-      if (handle_inline(line, inline_stack) < 0) {
+      if (handle_text(line, inline_stack) < 0) {
         return -1;
       }
       break;
@@ -93,7 +93,7 @@ int handle_heading(char *line, Token *ast) {
   return 0;
 }
 
-int handle_inline(char *line, Stack *inline_stack) {
+int handle_text(char *line, Stack *inline_stack) {
   Token **stack_top_ptr = peek_stack(inline_stack);
   if (!stack_top_ptr) {
     Token *text = create_token(TEXT, 0, line);
