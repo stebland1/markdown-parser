@@ -146,6 +146,8 @@ int parse_line(char *line, Stack *inline_stack) {
         continue;
       }
 
+      free(elem);
+
       // From here on, it's known that there should be an emphasis token.
       // Everything between open_delim to close_delim (exclusive)
       // should be its children.
