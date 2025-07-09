@@ -246,12 +246,13 @@ void print_ast(Token *root, int level) {
   }
 
   if (root->content) {
-    printf("- content: %s\n", root->content);
+    printf("- content: \"%s\"\n", root->content);
   }
 
   for (size_t i = 0; i < level; i++) {
     printf("\t");
   }
+
   printf("-----------------------\n");
 
   for (size_t i = 0; i < root->child_count; i++) {
