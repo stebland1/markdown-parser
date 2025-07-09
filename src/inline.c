@@ -72,6 +72,25 @@ int can_close_emphasis(char *c, char *line) {
   return (*c == '\0') || isspace(*c) || ispunct(*c);
 }
 
+TokenType get_emphasis_token_type(char symbol, int count) {
+  TokenType token_type = UNKNOWN;
+  switch (symbol) {
+  case '_':
+  case '*':
+    switch (count) {
+    case 2:
+      token_type = BOLD;
+      break;
+    case 1:
+      token_type = ITALIC;
+      break;
+    }
+    break;
+  }
+
+  return token_type;
+}
+
 int parse_line(char *line, Stack *inline_stack) {
   char text_buf[1024];
   size_t text_buf_len = 0;
@@ -172,21 +191,8 @@ int parse_line(char *line, Stack *inline_stack) {
 
       reverse_list(children_buf, buf_len, sizeof(InlineElement *));
 
-      TokenType token_type = UNKNOWN;
-      switch (open_delim->delimiter.symbol) {
-      case '_':
-      case '*':
-        switch (open_delim->delimiter.count) {
-        case 2:
-          token_type = BOLD;
-          break;
-        case 1:
-          token_type = ITALIC;
-          break;
-        }
-        break;
-      }
-
+      TokenType token_type = get_emphasis_token_type(
+          open_delim->delimiter.symbol, open_delim->delimiter.count);
       assert(token_type != UNKNOWN);
       free(open_delim);
 
