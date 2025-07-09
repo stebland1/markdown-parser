@@ -6,15 +6,14 @@
 #include <stdint.h>
 
 typedef struct {
-  char symbol;   // the actual delimiter i.e. *.
-  uint8_t count; // the number of them i.e. 2.
-  uint8_t pos;
-  uint8_t can_open;
-  uint8_t can_close;
+  char symbol; // the actual delimiter i.e. *.
+  int count;   // the number of them i.e. 2.
 } Delimiter;
 
+typedef enum { TOKEN, DELIMITER } InlineElementType;
+
 typedef struct {
-  enum { TOKEN, DELIMITER } type;
+  InlineElementType type;
   union {
     Token *token;
     Delimiter delimiter;
@@ -22,11 +21,17 @@ typedef struct {
 } InlineElement;
 
 int parse_line(char *line, Stack *inline_stack);
-char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
-                      Stack *inline_stack);
 int is_matching_delimiter(Delimiter *delim1, Delimiter *delim2);
 int can_open_emphasis(char *c, char *line);
 int can_close_emphasis(char *c, char *line);
 int is_escaped(char *c, char *line);
+InlineElement *create_inline_element(InlineElementType type, void *data);
+InlineElement *find_open_delimiter(Stack *inline_stack, Delimiter *close_delim);
+
+TokenType get_emphasis_token_type(char symbol, int count);
+int create_emphasis_token(TokenType token_type, InlineElement **children,
+                          size_t children_len, Stack *inline_stack);
+char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
+                      Stack *inline_stack);
 
 #endif

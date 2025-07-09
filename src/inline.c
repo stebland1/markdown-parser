@@ -11,6 +11,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+InlineElement *create_inline_element(InlineElementType type, void *data) {
+  InlineElement *elem = malloc(sizeof(InlineElement));
+  if (!elem) {
+    return NULL;
+  }
+
+  elem->type = type;
+
+  switch (elem->type) {
+  case TOKEN:
+    elem->token = data;
+    break;
+  case DELIMITER:
+    elem->delimiter = *(Delimiter *)data;
+    break;
+  default:
+    free(elem);
+    return NULL;
+  }
+
+  return elem;
+}
+
 int flush_text_buf(char *buf, size_t *len, Stack *stack) {
   if (*len == 0) {
     return 0;
@@ -91,6 +114,31 @@ TokenType get_emphasis_token_type(char symbol, int count) {
   return token_type;
 }
 
+int create_emphasis_token(TokenType token_type, InlineElement **children,
+                          size_t children_len, Stack *inline_stack) {
+  Token *token = create_token(token_type, children_len, NULL);
+  for (size_t i = 0; i < children_len; i++) {
+    if (add_child_to_token(token, children[i]->token) < 0) {
+      free_token(token);
+      return -1;
+    }
+  }
+
+  InlineElement *element = create_inline_element(TOKEN, token);
+  if (!element) {
+    // @TODO: free inline element.
+    free_token(token);
+    return -1;
+  }
+
+  if (push(inline_stack, &element) < 0) {
+    free_token(token);
+    return -1;
+  }
+
+  return 0;
+}
+
 char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
                       Stack *inline_stack) {
   // If it's escaped, skip trying to parse.
@@ -126,14 +174,11 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     return c;
   }
 
-  InlineElement *elem = malloc(sizeof(InlineElement));
+  Delimiter delimiter = {.symbol = symbol, .count = count};
+  InlineElement *elem = create_inline_element(DELIMITER, &delimiter);
   if (!elem) {
     return NULL;
   }
-
-  elem->type = DELIMITER;
-  elem->delimiter.symbol = symbol;
-  elem->delimiter.count = count;
 
   // If it can open push it immediately onto the stack.
   // The stack shouldn't ever contain closing delimiters.
@@ -184,31 +229,13 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   } while (cur != open_delim);
 
   reverse_list(children_buf, buf_len, sizeof(InlineElement *));
-
   TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
                                                  open_delim->delimiter.count);
   assert(token_type != UNKNOWN);
   free(open_delim);
 
-  // Create the emphasis token
-  Token *token = create_token(token_type, buf_len, NULL);
-  for (size_t i = 0; i < buf_len; i++) {
-    if (add_child_to_token(token, children_buf[i]->token) < 0) {
-      free_token(token);
-      return NULL;
-    }
-  }
-
-  InlineElement *element = malloc(sizeof(InlineElement));
-  if (!element) {
-    free_token(token);
-    return NULL;
-  }
-
-  element->type = TOKEN;
-  element->token = token;
-  if (push(inline_stack, &element) < 0) {
-    free_token(token);
+  if (create_emphasis_token(token_type, children_buf, buf_len, inline_stack) <
+      0) {
     return NULL;
   }
 
