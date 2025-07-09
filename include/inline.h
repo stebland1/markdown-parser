@@ -33,5 +33,6 @@ int create_emphasis_token(TokenType token_type, InlineElement **children,
                           size_t children_len, Stack *inline_stack);
 char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
                       Stack *inline_stack);
+int flush_text_buf(char *buf, size_t *len, Stack *stack);
 
 #endif
