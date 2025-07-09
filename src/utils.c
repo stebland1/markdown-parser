@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "inline.h"
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -84,4 +85,26 @@ int is_blank_line(char *line) {
   while (isspace(*line))
     line++;
   return *line == '\0';
+}
+
+void reverse_list(void *list, size_t list_size, size_t item_size) {
+  if (list_size <= 1) {
+    return;
+  }
+
+  char *arr = (char *)list;
+  void *tmp = malloc(list_size * item_size);
+  if (!tmp) {
+    return;
+  }
+
+  for (size_t i = 0; i < list_size / 2; i++) {
+    size_t j = list_size - 1 - i;
+
+    memcpy(tmp, arr + i * item_size, item_size);
+    memcpy(arr + i * item_size, arr + j * item_size, item_size);
+    memcpy(arr + j * item_size, tmp, item_size);
+  }
+
+  free(tmp);
 }

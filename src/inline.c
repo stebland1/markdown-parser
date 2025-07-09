@@ -2,6 +2,7 @@
 #include "markdown.h"
 #include "stack.h"
 #include "token.h"
+#include "utils.h"
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -166,12 +167,7 @@ int parse_line(char *line, Stack *inline_stack) {
         }
       } while (cur != open_delim);
 
-      // Reverse the order, as stack was FILO.
-      for (size_t i = 0; i < buf_len / 2; i++) {
-        InlineElement *tmp = children_buf[i];
-        children_buf[i] = children_buf[buf_len - 1 - i];
-        children_buf[buf_len - 1 - i] = tmp;
-      }
+      reverse_list(children_buf, buf_len, sizeof(InlineElement *));
 
       TokenType token_type;
       switch (open_delim->delimiter.symbol) {
