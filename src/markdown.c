@@ -120,17 +120,14 @@ int handle_text(char *line, Stack *inline_stack) {
     return -1;
   }
 
-  InlineElement *elem = malloc(sizeof(InlineElement));
+  InlineElement *elem = create_inline_element(TOKEN, token);
   if (!elem) {
     free_token(token);
     return -1;
   }
 
-  elem->type = TOKEN;
-  elem->token = token;
   if (push(inline_stack, &elem) < 0) {
-    free_token(token);
-    free(elem);
+    free_inline_element(elem);
     return -1;
   }
 

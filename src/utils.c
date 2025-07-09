@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "inline.h"
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>

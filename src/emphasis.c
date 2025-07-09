@@ -45,7 +45,6 @@ int create_emphasis_token(TokenType token_type, InlineElement **children,
 
   InlineElement *element = create_inline_element(TOKEN, token);
   if (!element) {
-    // @TODO: free inline element.
     free_token(token);
     return -1;
   }
@@ -103,7 +102,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // The stack shouldn't ever contain closing delimiters.
   if (can_open) {
     if (push(inline_stack, &elem) < 0) {
-      free(elem);
+      free_inline_element(elem);
       return NULL;
     }
 
@@ -121,11 +120,11 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
       text_buf[(*text_buf_len)++] = close_delim->symbol;
     }
 
-    free(elem);
+    free_inline_element(elem);
     return c;
   }
 
-  free(elem);
+  free_inline_element(elem);
 
   // From here on, it's known that there should be an emphasis token.
   // Everything between open_delim to close_delim (exclusive)
@@ -137,7 +136,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   do {
     if (pop(inline_stack, &cur) < 0) {
       for (size_t i = 0; i < buf_len; i++) {
-        free(children_buf[i]);
+        free_inline_element(children_buf[i]);
       }
       return NULL;
     }
@@ -151,7 +150,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
                                                  open_delim->delimiter.count);
   assert(token_type != UNKNOWN);
-  free(open_delim);
+  free_inline_element(open_delim);
 
   if (create_emphasis_token(token_type, children_buf, buf_len, inline_stack) <
       0) {

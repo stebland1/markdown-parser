@@ -2,6 +2,7 @@
 #include "emphasis.h"
 #include "markdown.h"
 #include "stack.h"
+#include "token.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -30,6 +31,23 @@ InlineElement *create_inline_element(InlineElementType type, void *data) {
   }
 
   return elem;
+}
+
+void free_inline_element(InlineElement *elem) {
+  if (!elem) {
+    return;
+  }
+
+  switch (elem->type) {
+  case TOKEN:
+    free_token(elem->token);
+    break;
+  case DELIMITER:
+    // Nothing to free
+    break;
+  }
+
+  free(elem);
 }
 
 int flush_text_buf(char *buf, size_t *len, Stack *stack) {
