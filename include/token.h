@@ -10,6 +10,7 @@ typedef enum {
   TEXT,
   BOLD,
   ITALIC,
+  UNKNOWN,
 } TokenType;
 
 typedef struct Token {

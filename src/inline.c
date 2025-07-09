@@ -3,6 +3,7 @@
 #include "stack.h"
 #include "token.h"
 #include "utils.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -169,7 +170,7 @@ int parse_line(char *line, Stack *inline_stack) {
 
       reverse_list(children_buf, buf_len, sizeof(InlineElement *));
 
-      TokenType token_type;
+      TokenType token_type = UNKNOWN;
       switch (open_delim->delimiter.symbol) {
       case '_':
       case '*':
@@ -181,8 +182,10 @@ int parse_line(char *line, Stack *inline_stack) {
           token_type = ITALIC;
           break;
         }
+        break;
       }
 
+      assert(token_type != UNKNOWN);
       free(open_delim);
 
       // Create the emphasis token
