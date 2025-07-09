@@ -153,13 +153,15 @@ int parse_line(char *line, Stack *inline_stack) {
       // From here on, it's known that there should be an emphasis token.
       // Everything between open_delim to close_delim (exclusive)
       // should be its children.
-      InlineElement *children_buf[64];
       size_t buf_len = 0;
+      InlineElement *children_buf[64];
+      InlineElement *cur = NULL;
 
-      // Collect elements from the stack
-      InlineElement *cur;
       do {
         if (pop(inline_stack, &cur) < 0) {
+          for (size_t i = 0; i < buf_len; i++) {
+            free(children_buf[i]);
+          }
           return -1;
         }
 
