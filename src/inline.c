@@ -53,7 +53,7 @@ InlineElement *find_open_delimiter(Stack *inline_stack,
 // check if the cur character is escaped i.e. followed by a backslash.
 // return 1 for true 0 for false.
 int is_escaped(char *c, char *line) {
-  if (c > line) {
+  if (c <= line) {
     return 0;
   }
 
