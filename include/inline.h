@@ -21,4 +21,11 @@ typedef struct {
   };
 } InlineElement;
 
+int parse_line(char *line, Stack *inline_stack);
+int handle_emphasis(char *line, Stack *inline_stack);
+int is_matching_delimiter(Delimiter *delim1, Delimiter *delim2);
+int can_open_emphasis(char *c, char *line);
+int can_close_emphasis(char *c, char *line);
+int is_escaped(char *c, char *line);
+
 #endif

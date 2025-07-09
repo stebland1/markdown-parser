@@ -8,6 +8,8 @@ typedef enum {
   HEADING,
   PARAGRAPH,
   TEXT,
+  BOLD,
+  ITALIC,
 } TokenType;
 
 typedef struct Token {

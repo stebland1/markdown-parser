@@ -46,7 +46,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
     Token *curblock = *curblock_ptr;
     switch (curblock->type) {
     case PARAGRAPH:
-      if (handle_text(line, inline_stack) < 0) {
+      if (parse_line(line, inline_stack) < 0) {
         return -1;
       }
       break;
@@ -54,7 +54,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
       if (handle_paragraph(line, block_stack) < 0) {
         return -1;
       }
-      if (handle_text(line, inline_stack) < 0) {
+      if (parse_line(line, inline_stack) < 0) {
         return -1;
       }
       break;
