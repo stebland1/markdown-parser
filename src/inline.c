@@ -91,6 +91,130 @@ TokenType get_emphasis_token_type(char symbol, int count) {
   return token_type;
 }
 
+char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
+                      Stack *inline_stack) {
+  // If it's escaped, skip trying to parse.
+  // Treat as a normal character.
+  if (is_escaped(c, line)) {
+    text_buf[(*text_buf_len)++] = *c++;
+    return c;
+  }
+
+  char symbol = *c;
+  int count = 1;
+  int can_open = can_open_emphasis(c, line);
+
+  c++;
+  while (*c == symbol) {
+    count++;
+    c++;
+  }
+
+  // If the delim can be an open and close simultaneously
+  // we know for sure it's an invalid delimiter.
+  // Treat it as a normal char and continue.
+  if (can_close_emphasis(c, line) && can_open) {
+    while (count--) {
+      text_buf[(*text_buf_len)++] = *c++;
+    }
+    return c;
+  }
+
+  // From here on, we know we have a potential valid delimiter.
+  // So flush the text buffer.
+  if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+    return c;
+  }
+
+  InlineElement *elem = malloc(sizeof(InlineElement));
+  if (!elem) {
+    return NULL;
+  }
+
+  elem->type = DELIMITER;
+  elem->delimiter.symbol = symbol;
+  elem->delimiter.count = count;
+
+  // If it can open push it immediately onto the stack.
+  // The stack shouldn't ever contain closing delimiters.
+  if (can_open) {
+    if (push(inline_stack, &elem) < 0) {
+      free(elem);
+      return NULL;
+    }
+
+    return c;
+  }
+
+  // From here on we know that this is a potential closing delimiter.
+  Delimiter *close_delim = &elem->delimiter;
+  InlineElement *open_delim = find_open_delimiter(inline_stack, close_delim);
+
+  // If we cannot find the matching delimiter,
+  // then treat this current delimiter as text and continue.
+  if (!open_delim) {
+    for (size_t i = 0; i < close_delim->count; i++) {
+      text_buf[(*text_buf_len)++] = close_delim->symbol;
+    }
+
+    free(elem);
+    return c;
+  }
+
+  free(elem);
+
+  // From here on, it's known that there should be an emphasis token.
+  // Everything between open_delim to close_delim (exclusive)
+  // should be its children.
+  size_t buf_len = 0;
+  InlineElement *children_buf[64];
+  InlineElement *cur = NULL;
+
+  do {
+    if (pop(inline_stack, &cur) < 0) {
+      for (size_t i = 0; i < buf_len; i++) {
+        free(children_buf[i]);
+      }
+      return NULL;
+    }
+
+    if (cur != open_delim) {
+      children_buf[buf_len++] = cur;
+    }
+  } while (cur != open_delim);
+
+  reverse_list(children_buf, buf_len, sizeof(InlineElement *));
+
+  TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
+                                                 open_delim->delimiter.count);
+  assert(token_type != UNKNOWN);
+  free(open_delim);
+
+  // Create the emphasis token
+  Token *token = create_token(token_type, buf_len, NULL);
+  for (size_t i = 0; i < buf_len; i++) {
+    if (add_child_to_token(token, children_buf[i]->token) < 0) {
+      free_token(token);
+      return NULL;
+    }
+  }
+
+  InlineElement *element = malloc(sizeof(InlineElement));
+  if (!element) {
+    free_token(token);
+    return NULL;
+  }
+
+  element->type = TOKEN;
+  element->token = token;
+  if (push(inline_stack, &element) < 0) {
+    free_token(token);
+    return NULL;
+  }
+
+  return c;
+}
+
 int parse_line(char *line, Stack *inline_stack) {
   char text_buf[1024];
   size_t text_buf_len = 0;
@@ -100,123 +224,12 @@ int parse_line(char *line, Stack *inline_stack) {
     switch (*p) {
     case '*':
     case '_': {
-      // If it's escaped, skip trying to parse.
-      // Treat as a normal character.
-      if (is_escaped(p, line)) {
-        text_buf[text_buf_len++] = *p++;
-        continue;
-      }
-
-      char symbol = *p;
-      int count = 1;
-      int can_open = can_open_emphasis(p, line);
-
-      p++;
-      while (*p == symbol) {
-        count++;
-        p++;
-      }
-
-      // If the delim can be an open and close simultaneously
-      // we know for sure it's an invalid delimiter.
-      // Treat it as a normal char and continue.
-      if (can_close_emphasis(p, line) && can_open) {
-        while (count--) {
-          text_buf[text_buf_len++] = *p++;
-        }
-        continue;
-      }
-
-      // From here on, we know we have a potential valid delimiter.
-      // So flush the text buffer.
-      if (flush_text_buf(text_buf, &text_buf_len, inline_stack) < 0) {
+      char *new_ptr =
+          handle_emphasis(p, line, text_buf, &text_buf_len, inline_stack);
+      if (!new_ptr) {
         return -1;
       }
-
-      InlineElement *elem = malloc(sizeof(InlineElement));
-      if (!elem) {
-        return -1;
-      }
-
-      elem->type = DELIMITER;
-      elem->delimiter.symbol = symbol;
-      elem->delimiter.count = count;
-
-      // If it can open push it immediately onto the stack.
-      // The stack shouldn't ever contain closing delimiters.
-      if (can_open) {
-        if (push(inline_stack, &elem) < 0) {
-          free(elem);
-          return -1;
-        }
-        continue;
-      }
-
-      // From here on we know that this is a potential closing delimiter.
-      Delimiter *close_delim = &elem->delimiter;
-      InlineElement *open_delim =
-          find_open_delimiter(inline_stack, close_delim);
-
-      // If we cannot find the matching delimiter,
-      // then treat this current delimiter as text and continue.
-      if (!open_delim) {
-        for (size_t i = 0; i < close_delim->count; i++) {
-          text_buf[text_buf_len++] = close_delim->symbol;
-        }
-        free(elem);
-        continue;
-      }
-
-      free(elem);
-
-      // From here on, it's known that there should be an emphasis token.
-      // Everything between open_delim to close_delim (exclusive)
-      // should be its children.
-      size_t buf_len = 0;
-      InlineElement *children_buf[64];
-      InlineElement *cur = NULL;
-
-      do {
-        if (pop(inline_stack, &cur) < 0) {
-          for (size_t i = 0; i < buf_len; i++) {
-            free(children_buf[i]);
-          }
-          return -1;
-        }
-
-        if (cur != open_delim) {
-          children_buf[buf_len++] = cur;
-        }
-      } while (cur != open_delim);
-
-      reverse_list(children_buf, buf_len, sizeof(InlineElement *));
-
-      TokenType token_type = get_emphasis_token_type(
-          open_delim->delimiter.symbol, open_delim->delimiter.count);
-      assert(token_type != UNKNOWN);
-      free(open_delim);
-
-      // Create the emphasis token
-      Token *token = create_token(token_type, buf_len, NULL);
-      for (size_t i = 0; i < buf_len; i++) {
-        if (add_child_to_token(token, children_buf[i]->token) < 0) {
-          free_token(token);
-          return -1;
-        }
-      }
-
-      InlineElement *element = malloc(sizeof(InlineElement));
-      if (!element) {
-        free_token(token);
-        return -1;
-      }
-
-      element->type = TOKEN;
-      element->token = token;
-      if (push(inline_stack, &element) < 0) {
-        free_token(token);
-        return -1;
-      }
+      p = new_ptr;
       break;
     }
     default:
