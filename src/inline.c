@@ -79,6 +79,8 @@ int parse_line(char *line, Stack *inline_stack) {
     switch (*p) {
     case '*':
     case '_': {
+      // If it's escaped, skip trying to parse.
+      // Treat as a normal character.
       if (is_escaped(p, line)) {
         text_buf[text_buf_len++] = *p++;
         continue;
@@ -94,6 +96,9 @@ int parse_line(char *line, Stack *inline_stack) {
         p++;
       }
 
+      // If the delim can be an open and close simultaneously
+      // we know for sure it's an invalid delimiter.
+      // Treat it as a normal char and continue.
       if (can_close_emphasis(p, line) && can_open) {
         while (count--) {
           text_buf[text_buf_len++] = *p++;
@@ -101,6 +106,8 @@ int parse_line(char *line, Stack *inline_stack) {
         continue;
       }
 
+      // From here on, we know we have a potential valid delimiter.
+      // So flush the text buffer.
       if (flush_text_buf(text_buf, &text_buf_len, inline_stack) < 0) {
         return -1;
       }
@@ -114,6 +121,8 @@ int parse_line(char *line, Stack *inline_stack) {
       elem->delimiter.symbol = symbol;
       elem->delimiter.count = count;
 
+      // If it can open push it immediately onto the stack.
+      // The stack shouldn't ever contain closing delimiters.
       if (can_open) {
         if (push(inline_stack, &elem) < 0) {
           free(elem);
@@ -122,11 +131,14 @@ int parse_line(char *line, Stack *inline_stack) {
         continue;
       }
 
+      // From here on we know that this is a potential closing delimiter.
       Delimiter *close_delim = &elem->delimiter;
+      InlineElement *open_delim =
+          find_open_delimiter(inline_stack, close_delim);
 
-      InlineElement *target = find_open_delimiter(inline_stack, close_delim);
-
-      if (!target) {
+      // If we cannot find the matching delimiter,
+      // then treat this current delimiter as text and continue.
+      if (!open_delim) {
         for (size_t i = 0; i < close_delim->count; i++) {
           text_buf[text_buf_len++] = close_delim->symbol;
         }
@@ -134,31 +146,36 @@ int parse_line(char *line, Stack *inline_stack) {
         continue;
       }
 
-      InlineElement *emphasis_children_buf[64];
+      // From here on, it's known that there should be an emphasis token.
+      // Everything between open_delim to close_delim (exclusive)
+      // should be its children.
+      InlineElement *children_buf[64];
       size_t buf_len = 0;
 
-      InlineElement *stack_top;
+      // Collect elements from the stack
+      InlineElement *cur;
       do {
-        if (pop(inline_stack, &stack_top) < 0) {
+        if (pop(inline_stack, &cur) < 0) {
           return -1;
         }
 
-        if (stack_top != target) {
-          emphasis_children_buf[buf_len++] = stack_top;
+        if (cur != open_delim) {
+          children_buf[buf_len++] = cur;
         }
-      } while (stack_top != target);
+      } while (cur != open_delim);
 
+      // Reverse the order, as stack was FILO.
       for (size_t i = 0; i < buf_len / 2; i++) {
-        InlineElement *tmp = emphasis_children_buf[i];
-        emphasis_children_buf[i] = emphasis_children_buf[buf_len - 1 - i];
-        emphasis_children_buf[buf_len - 1 - i] = tmp;
+        InlineElement *tmp = children_buf[i];
+        children_buf[i] = children_buf[buf_len - 1 - i];
+        children_buf[buf_len - 1 - i] = tmp;
       }
 
       TokenType token_type;
-      switch (target->delimiter.symbol) {
+      switch (open_delim->delimiter.symbol) {
       case '_':
       case '*':
-        switch (target->delimiter.count) {
+        switch (open_delim->delimiter.count) {
         case 2:
           token_type = BOLD;
           break;
@@ -168,11 +185,12 @@ int parse_line(char *line, Stack *inline_stack) {
         }
       }
 
-      free(target);
+      free(open_delim);
 
+      // Create the emphasis token
       Token *token = create_token(token_type, buf_len, NULL);
       for (size_t i = 0; i < buf_len; i++) {
-        if (add_child_to_token(token, emphasis_children_buf[i]->token) < 0) {
+        if (add_child_to_token(token, children_buf[i]->token) < 0) {
           free_token(token);
           return -1;
         }
