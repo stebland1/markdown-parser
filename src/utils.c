@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <ctype.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,4 +107,37 @@ void reverse_list(void *list, size_t list_size, size_t item_size) {
   }
 
   free(tmp);
+}
+
+char *concat(int n, ...) {
+  va_list args;
+  va_start(args, n);
+
+  size_t bufsize = 0;
+
+  for (size_t i = 0; i < n; i++) {
+    char *s = va_arg(args, char *);
+    bufsize += strlen(s) - 1 /* accounting for 0 based indexing */;
+  }
+
+  va_end(args);
+
+  if (bufsize == 0) {
+    return NULL;
+  }
+
+  bufsize += 1; /* null terminator */
+  char *buf = malloc(bufsize);
+  if (!buf) {
+    return NULL;
+  }
+
+  va_start(args, n);
+  for (size_t i = 0; i < n; i++) {
+    char *s = va_arg(args, char *);
+    strcat(buf, s);
+  }
+  va_end(args);
+
+  return buf;
 }
