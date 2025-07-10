@@ -52,7 +52,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
       }
       break;
     default: {
-      if (handle_paragraph(line, block_stack) < 0) {
+      if (handle_paragraph(block_stack) < 0) {
         return -1;
       }
       if (parse_line(line, inline_stack) < 0) {
@@ -135,7 +135,7 @@ int handle_text(char *line, Stack *inline_stack) {
   return 0;
 }
 
-int handle_paragraph(char *line, Stack *stack) {
+int handle_paragraph(Stack *stack) {
   Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
   if (!paragraph) {
     return -1;
