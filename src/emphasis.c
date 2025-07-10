@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // check if the cur char can be interpreted as an opening emphasis tag
 // such as '*' or '_'
@@ -83,9 +84,8 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // we know for sure it's an invalid delimiter.
   // Treat it as a normal char and continue.
   if (can_close_emphasis(c, line) && can_open) {
-    while (count--) {
-      text_buf[(*text_buf_len)++] = symbol;
-    }
+    memset(&text_buf[*text_buf_len], symbol, count);
+    *text_buf_len += count;
     return c;
   }
 
@@ -117,12 +117,13 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // If we cannot find the matching delimiter,
   // then treat this current delimiter as text and continue.
   if (!open_delim) {
-    for (size_t i = 0; i < close_delim->count; i++) {
-      text_buf[(*text_buf_len)++] = close_delim->symbol;
-    }
+    memset(&text_buf[*text_buf_len], symbol, count);
+    *text_buf_len += count;
+
     if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
       return NULL;
     }
+
     free_inline_element(elem);
     return c;
   }
