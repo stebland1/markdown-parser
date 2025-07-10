@@ -5,6 +5,8 @@
 #include "token.h"
 #include <stdint.h>
 
+#define MAX_DELIMITER_LEN 6
+
 typedef struct {
   char symbol; // the actual delimiter i.e. *.
   int count;   // the number of them i.e. 2.

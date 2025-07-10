@@ -80,6 +80,12 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     c++;
   }
 
+  if (count > MAX_DELIMITER_LEN) {
+    memset(&text_buf[*text_buf_len], symbol, count);
+    *text_buf_len += count;
+    return c;
+  }
+
   // If the delim can be an open and close simultaneously
   // we know for sure it's an invalid delimiter.
   // Treat it as a normal char and continue.
