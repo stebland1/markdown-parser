@@ -86,10 +86,13 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     return c;
   }
 
+  int can_close = can_close_emphasis(c, line);
+
   // If the delim can be an open and close simultaneously
   // we know for sure it's an invalid delimiter.
+  // Same goes for if it can't be either, (open OR close).
   // Treat it as a normal char and continue.
-  if (can_close_emphasis(c, line) && can_open) {
+  if ((can_close && can_open) || (!can_close && !can_open)) {
     memset(&text_buf[*text_buf_len], symbol, count);
     *text_buf_len += count;
     return c;
