@@ -117,7 +117,7 @@ char *concat(int n, ...) {
 
   for (size_t i = 0; i < n; i++) {
     char *s = va_arg(args, char *);
-    bufsize += strlen(s) - 1 /* accounting for 0 based indexing */;
+    bufsize += strlen(s);
   }
 
   va_end(args);
