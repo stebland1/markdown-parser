@@ -89,12 +89,6 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     return c;
   }
 
-  // From here on, we know we have a potential valid delimiter.
-  // So flush the text buffer.
-  if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
-    return NULL;
-  }
-
   Delimiter delimiter = {.symbol = symbol, .count = count};
   InlineElement *elem = create_inline_element(DELIMITER, &delimiter);
   if (!elem) {
@@ -104,6 +98,10 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // If it can open push it immediately onto the stack.
   // The stack shouldn't ever contain closing delimiters.
   if (can_open) {
+    if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+      return NULL;
+    }
+
     if (push_to_inline_stack(inline_stack, elem) < 0) {
       free_inline_element(elem);
       return NULL;
@@ -122,7 +120,9 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     for (size_t i = 0; i < close_delim->count; i++) {
       text_buf[(*text_buf_len)++] = close_delim->symbol;
     }
-
+    if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+      return NULL;
+    }
     free_inline_element(elem);
     return c;
   }
