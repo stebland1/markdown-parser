@@ -50,6 +50,22 @@ void free_inline_element(InlineElement *elem) {
   free(elem);
 }
 
+// Before pushing to the inline stack, we need to append prev and next
+int push_to_inline_stack(Stack *inline_stack, InlineElement *element) {
+  InlineElement **prev_ptr = peek_stack(inline_stack);
+  if (prev_ptr) {
+    InlineElement *prev_item = *prev_ptr;
+    element->prev = prev_item;
+    prev_item->next = element;
+  }
+
+  if (push(inline_stack, &element) < 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
 int flush_text_buf(char *buf, size_t *len, Stack *stack) {
   if (*len == 0) {
     return 0;

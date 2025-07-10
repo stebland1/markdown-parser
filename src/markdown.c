@@ -3,6 +3,7 @@
 #include "stack.h"
 #include "token.h"
 #include "utils.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -126,7 +127,7 @@ int handle_text(char *line, Stack *inline_stack) {
     return -1;
   }
 
-  if (push(inline_stack, &elem) < 0) {
+  if (push_to_inline_stack(inline_stack, elem) < 0) {
     free_inline_element(elem);
     return -1;
   }
@@ -143,6 +144,52 @@ int handle_paragraph(char *line, Stack *stack) {
   if (push(stack, &paragraph) < 0) {
     free_token(paragraph);
     return -1;
+  }
+
+  return 0;
+}
+
+int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
+  InlineElement *prev = delimiter->prev;
+  InlineElement *next = delimiter->next;
+
+  if (prev && next) {
+    char *new_content =
+        concat(3, prev->token->content, "**", next->token->content);
+    if (!new_content) {
+      return -1;
+    }
+    free(prev->token->content);
+    prev->token->content = new_content;
+
+    // pop the `next` item as it's now been concatenated.
+    free_inline_element(delimiter);
+    InlineElement *next_in_stack = NULL;
+    pop(inline_stack, &next_in_stack);
+    free_inline_element(next_in_stack);
+    return 0;
+  }
+
+  if (prev) {
+    char *new_content = concat(2, prev->token->content, "**");
+    free_inline_element(delimiter);
+    if (!new_content) {
+      return -1;
+    }
+    free(prev->token->content);
+    prev->token->content = new_content;
+    return 0;
+  }
+
+  if (next) {
+    char *new_content = concat(2, "**", next->token->content);
+    free_inline_element(delimiter);
+    if (!new_content) {
+      return -1;
+    }
+    free(next->token->content);
+    next->token->content = new_content;
+    return 0;
   }
 
   return 0;
@@ -171,10 +218,19 @@ int handle_blank_line(Stack *block_stack, Stack *inline_stack, Token *ast) {
   }
 
   while (!is_stack_empty(&reversed)) {
-    InlineElement *inline_child = NULL;
-    pop(&reversed, &inline_child);
+    InlineElement *cur = NULL;
+    pop(&reversed, &cur);
 
-    if (add_child_to_token(parent_block, inline_child->token) < 0) {
+    assert(cur != NULL);
+
+    if (cur->type == DELIMITER) {
+      if (handle_unmatched_delimiter(cur, &reversed) < 0) {
+        return -1;
+      }
+      continue;
+    }
+
+    if (add_child_to_token(parent_block, cur->token) < 0) {
       return -1;
     }
   }

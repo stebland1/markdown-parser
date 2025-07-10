@@ -1,7 +1,10 @@
+#include "front_matter.h"
 #include "inline.h"
+#include "stack.h"
 #include "utils.h"
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // check if the cur char can be interpreted as an opening emphasis tag
@@ -49,7 +52,7 @@ int create_emphasis_token(TokenType token_type, InlineElement **children,
     return -1;
   }
 
-  if (push(inline_stack, &element) < 0) {
+  if (push_to_inline_stack(inline_stack, element) < 0) {
     free_token(token);
     return -1;
   }
@@ -101,7 +104,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // If it can open push it immediately onto the stack.
   // The stack shouldn't ever contain closing delimiters.
   if (can_open) {
-    if (push(inline_stack, &elem) < 0) {
+    if (push_to_inline_stack(inline_stack, elem) < 0) {
       free_inline_element(elem);
       return NULL;
     }
