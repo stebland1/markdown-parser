@@ -153,9 +153,12 @@ int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
   InlineElement *prev = delimiter->prev;
   InlineElement *next = delimiter->next;
 
+  char buf[MAX_DELIMITER_LEN];
+  memset(buf, delimiter->delimiter.symbol, delimiter->delimiter.count);
+
   if (prev && next) {
     char *new_content =
-        concat(3, prev->token->content, "**", next->token->content);
+        concat(3, prev->token->content, buf, next->token->content);
     if (!new_content) {
       return -1;
     }
@@ -171,7 +174,7 @@ int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
   }
 
   if (prev) {
-    char *new_content = concat(2, prev->token->content, "**");
+    char *new_content = concat(2, prev->token->content, buf);
     free_inline_element(delimiter);
     if (!new_content) {
       return -1;
@@ -182,7 +185,7 @@ int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
   }
 
   if (next) {
-    char *new_content = concat(2, "**", next->token->content);
+    char *new_content = concat(2, buf, next->token->content);
     free_inline_element(delimiter);
     if (!new_content) {
       return -1;
