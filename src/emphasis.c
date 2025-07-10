@@ -84,7 +84,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // Treat it as a normal char and continue.
   if (can_close_emphasis(c, line) && can_open) {
     while (count--) {
-      text_buf[(*text_buf_len)++] = *c++;
+      text_buf[(*text_buf_len)++] = symbol;
     }
     return c;
   }
@@ -92,7 +92,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // From here on, we know we have a potential valid delimiter.
   // So flush the text buffer.
   if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
-    return c;
+    return NULL;
   }
 
   Delimiter delimiter = {.symbol = symbol, .count = count};
