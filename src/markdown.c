@@ -1,4 +1,5 @@
 #include "markdown.h"
+#include "blocks/blank_line.h"
 #include "blocks/heading.h"
 #include "blocks/paragraph.h"
 #include "inline.h"
@@ -25,7 +26,7 @@ int process_file(FILE *file, ParserContext *ctx) {
     line[strcspn(line, "\n")] = '\0';
 
     if (is_blank_line(line)) {
-      if (handle_blank_line(ctx) < 0) {
+      if (blank_line_block_start(ctx) < 0) {
         return -1;
       }
       continue;
@@ -77,29 +78,6 @@ int is_front_matter(char *line, ParserContext *ctx) {
       ctx->in_front_matter = 0;
     }
     return 1;
-  }
-
-  return 0;
-}
-
-int handle_blank_line(ParserContext *ctx) {
-  Token **parent_block_ptr = peek_stack(ctx->block_stack);
-  if (!parent_block_ptr) {
-    return -1;
-  }
-
-  Token *parent_block = *parent_block_ptr;
-  // Ensures we don't pop the root AST node from the stack.
-  if (parent_block->type == DOCUMENT) {
-    return 0;
-  }
-
-  if (pop(ctx->block_stack, &parent_block) < 0) {
-    return -1;
-  }
-
-  if (add_child_to_token(ctx->ast, parent_block) < 0) {
-    return -1;
   }
 
   return 0;

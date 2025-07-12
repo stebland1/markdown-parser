@@ -14,6 +14,5 @@ typedef struct {
 
 int process_file(FILE *file, ParserContext *ctx);
 int is_front_matter(char *line, ParserContext *ctx);
-int handle_blank_line(ParserContext *ctx);
 
 #endif
