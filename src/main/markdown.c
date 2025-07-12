@@ -40,7 +40,13 @@ int main(int argc, char **argv) {
     goto fail;
   }
 
-  if (process_file(file, &block_stack, ast) < 0) {
+  ParserContext ctx = {
+      .block_stack = &block_stack,
+      .ast = ast,
+      .in_front_matter = 0,
+  };
+
+  if (process_file(file, &ctx) < 0) {
     goto fail;
   }
 

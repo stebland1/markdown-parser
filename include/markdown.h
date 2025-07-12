@@ -6,11 +6,14 @@
 #include <stddef.h>
 #include <stdio.h>
 
-int process_file(FILE *file, Stack *block_stack, Token *ast);
-int is_front_matter(char *line, int *in_front_matter);
-int parse_heading(char *line, Token **out);
-int handle_heading(char *line, Token *ast);
-int handle_paragraph(Stack *stack);
-int handle_blank_line(Stack *block_stack, Token *ast);
+typedef struct {
+  Stack *block_stack;
+  Token *ast;
+  int in_front_matter;
+} ParserContext;
+
+int process_file(FILE *file, ParserContext *ctx);
+int is_front_matter(char *line, ParserContext *ctx);
+int handle_blank_line(ParserContext *ctx);
 
 #endif
