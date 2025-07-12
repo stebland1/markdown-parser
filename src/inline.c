@@ -1,6 +1,6 @@
 #include "inline.h"
-#include "emphasis.h"
 #include "inline/element.h"
+#include "inline/emphasis.h"
 #include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"

@@ -14,7 +14,6 @@ MARKDOWN_SRC = src/main/markdown.c \
 							 src/parser.c \
 							 src/token.c \
 							 src/inline.c \
-							 src/emphasis.c \
 							 $(UTILS_SRC) \
 							 $(BLOCKS_SRC) \
 							 $(INLINE_SRC)
