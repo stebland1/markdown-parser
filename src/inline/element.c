@@ -1,4 +1,4 @@
-#include "inline.h"
+#include "inline/element.h"
 #include <stdlib.h>
 
 InlineElement *create_inline_element(InlineElementType type, void *data) {

@@ -13,7 +13,6 @@ FRONT_MATTER_SRC = src/main/front_matter.c src/front_matter.c src/utils/utils.c
 MARKDOWN_SRC = src/main/markdown.c \
 							 src/parser.c \
 							 src/token.c \
-							 src/inline.c \
 							 $(UTILS_SRC) \
 							 $(BLOCKS_SRC) \
 							 $(INLINE_SRC)

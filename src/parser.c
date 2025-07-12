@@ -2,7 +2,7 @@
 #include "blocks/blank_line.h"
 #include "blocks/heading.h"
 #include "blocks/paragraph.h"
-#include "inline.h"
+#include "inline/parser.h"
 #include "token.h"
 #include "utils/stack.h"
 #include <assert.h>

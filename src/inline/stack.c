@@ -1,5 +1,4 @@
 #include "utils/stack.h"
-#include "inline.h"
 #include "inline/element.h"
 #include "utils/utils.h"
 #include <stdlib.h>

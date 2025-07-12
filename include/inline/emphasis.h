@@ -1,7 +1,7 @@
 #ifndef EMPHASIS_H
 #define EMPHASIS_H
 
-#include "inline.h"
+#include "inline/element.h"
 #include "token.h"
 #include "utils/stack.h"
 
