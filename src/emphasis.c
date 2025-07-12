@@ -139,6 +139,10 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
 
   free_inline_element(elem);
 
+  if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+    return NULL;
+  }
+
   // From here on, it's known that there should be an emphasis token.
   // Everything between open_delim to close_delim (exclusive)
   // should be its children.

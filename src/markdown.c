@@ -13,9 +13,24 @@
 
 #define FRONT_MATTER_DELIM "---"
 #define PARAGRAPH_GROWTH_FACTOR 4
+#define LINE_GROWTH_FACTOR 6
 #define MAX_LINE 256
 
-int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
+int handle_paragraph(Stack *stack) {
+  Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
+  if (!paragraph) {
+    return -1;
+  }
+
+  if (push(stack, &paragraph) < 0) {
+    free_token(paragraph);
+    return -1;
+  }
+
+  return 0;
+}
+
+int process_file(FILE *file, Stack *block_stack, Stack *line_elements,
                  Token *ast) {
   char line[MAX_LINE];
   int in_front_matter = 0;
@@ -26,7 +41,7 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
     line[strcspn(line, "\n")] = '\0';
 
     if (is_blank_line(line)) {
-      if (handle_blank_line(block_stack, inline_stack, ast) < 0) {
+      if (handle_blank_line(block_stack, line_elements, ast) < 0) {
         return -1;
       }
       continue;
@@ -46,16 +61,42 @@ int process_file(FILE *file, Stack *block_stack, Stack *inline_stack,
 
     Token *curblock = *curblock_ptr;
     switch (curblock->type) {
-    case PARAGRAPH:
-      if (parse_line(line, inline_stack) < 0) {
+    case PARAGRAPH: {
+      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
+      if (!line_tok) {
+        free_stack(line_elements);
+        return -1;
+      }
+
+      if (push(line_elements, &line_tok) < 0) {
+        free(line_tok);
+        free_stack(line_elements);
+        return -1;
+      }
+
+      if (parse_line(line, line_elements) < 0) {
         return -1;
       }
       break;
+    }
     default: {
       if (handle_paragraph(block_stack) < 0) {
         return -1;
       }
-      if (parse_line(line, inline_stack) < 0) {
+
+      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
+      if (!line_tok) {
+        free_stack(line_elements);
+        return -1;
+      }
+
+      if (push(line_elements, &line_tok) < 0) {
+        free(line_tok);
+        free_stack(line_elements);
+        return -1;
+      }
+
+      if (parse_line(line, line_elements) < 0) {
         return -1;
       }
       break;
@@ -96,109 +137,7 @@ int handle_heading(char *line, Token *ast) {
   return 0;
 }
 
-int handle_text(char *line, Stack *inline_stack) {
-  InlineElement **stack_top_ptr = peek_stack(inline_stack);
-  InlineElement *stack_top = stack_top_ptr ? *stack_top_ptr : NULL;
-
-  if (stack_top && stack_top->type == TOKEN && stack_top->token->type == TEXT) {
-    size_t old_len =
-        stack_top->token->content ? strlen(stack_top->token->content) : 0;
-    size_t new_len = old_len + 1 + strlen(line) + 1;
-
-    char *new_content = realloc(stack_top->token->content, new_len);
-    if (!new_content) {
-      return -1;
-    }
-
-    stack_top->token->content = new_content;
-    stack_top->token->content[old_len] = ' ';
-    strcpy(stack_top->token->content + old_len + 1, line);
-    return 0;
-  }
-
-  Token *token = create_token(TEXT, 0, line);
-  if (!token) {
-    return -1;
-  }
-
-  InlineElement *elem = create_inline_element(TOKEN, token);
-  if (!elem) {
-    free_token(token);
-    return -1;
-  }
-
-  if (push_to_inline_stack(inline_stack, elem) < 0) {
-    free_inline_element(elem);
-    return -1;
-  }
-
-  return 0;
-}
-
-int handle_paragraph(Stack *stack) {
-  Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
-  if (!paragraph) {
-    return -1;
-  }
-
-  if (push(stack, &paragraph) < 0) {
-    free_token(paragraph);
-    return -1;
-  }
-
-  return 0;
-}
-
-int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
-  InlineElement *prev = delimiter->prev;
-  InlineElement *next = delimiter->next;
-
-  char buf[MAX_DELIMITER_LEN];
-  memset(buf, delimiter->delimiter.symbol, delimiter->delimiter.count);
-
-  if (prev && next) {
-    char *new_content =
-        concat(3, prev->token->content, buf, next->token->content);
-    if (!new_content) {
-      return -1;
-    }
-    free(prev->token->content);
-    prev->token->content = new_content;
-
-    // pop the `next` item as it's now been concatenated.
-    free_inline_element(delimiter);
-    InlineElement *next_in_stack = NULL;
-    pop(inline_stack, &next_in_stack);
-    free_inline_element(next_in_stack);
-    return 0;
-  }
-
-  if (prev) {
-    char *new_content = concat(2, prev->token->content, buf);
-    free_inline_element(delimiter);
-    if (!new_content) {
-      return -1;
-    }
-    free(prev->token->content);
-    prev->token->content = new_content;
-    return 0;
-  }
-
-  if (next) {
-    char *new_content = concat(2, buf, next->token->content);
-    free_inline_element(delimiter);
-    if (!new_content) {
-      return -1;
-    }
-    free(next->token->content);
-    next->token->content = new_content;
-    return 0;
-  }
-
-  return 0;
-}
-
-int handle_blank_line(Stack *block_stack, Stack *inline_stack, Token *ast) {
+int handle_blank_line(Stack *block_stack, Stack *line_elements, Token *ast) {
   Token **parent_block_ptr = peek_stack(block_stack);
   if (!parent_block_ptr) {
     return -1;
@@ -216,24 +155,17 @@ int handle_blank_line(Stack *block_stack, Stack *inline_stack, Token *ast) {
 
   Stack reversed;
   // Reverse the inline stack to ensure correct ordering of inline nodes.
-  if (reverse_stack(&reversed, inline_stack) < 0) {
+  if (reverse_stack(&reversed, line_elements) < 0) {
     return -1;
   }
 
   while (!is_stack_empty(&reversed)) {
-    InlineElement *cur = NULL;
+    Token *cur = NULL;
     pop(&reversed, &cur);
 
-    assert(cur != NULL);
+    assert(cur->type == LINE);
 
-    if (cur->type == DELIMITER) {
-      if (handle_unmatched_delimiter(cur, &reversed) < 0) {
-        return -1;
-      }
-      continue;
-    }
-
-    if (add_child_to_token(parent_block, cur->token) < 0) {
+    if (add_child_to_token(parent_block, cur) < 0) {
       return -1;
     }
   }
@@ -276,6 +208,8 @@ char *get_token_type_str(TokenType token_type) {
     return "TEXT";
   case PARAGRAPH:
     return "PARAGRAPH";
+  case LINE:
+    return "LINE";
   case BOLD:
     return "BOLD";
   case ITALIC:
@@ -291,29 +225,28 @@ void print_ast(Token *root, int level) {
   }
 
   for (size_t i = 0; i < level; i++) {
-    printf("\t");
+    printf("  ");
   }
 
   char *type = get_token_type_str(root->type);
-  printf("- type: %s\n", type);
-
-  for (size_t i = 0; i < level; i++) {
-    printf("\t");
-  }
+  printf("Start %s\n", type);
 
   if (root->content) {
-    printf("- content: \"%s\"\n", root->content);
+    for (size_t i = 0; i < level + 1; i++) {
+      printf("  ");
+    }
+    printf("content: \"%s\"\n", root->content);
   }
-
-  for (size_t i = 0; i < level; i++) {
-    printf("\t");
-  }
-
-  printf("-----------------------\n");
 
   for (size_t i = 0; i < root->child_count; i++) {
     print_ast(root->children[i], level + 1);
   }
+
+  for (size_t i = 0; i < level; i++) {
+    printf("  ");
+  }
+
+  printf("End %s\n", type);
 }
 
 void free_ast(Token *root) {

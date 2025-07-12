@@ -1,4 +1,3 @@
-#include "inline.h"
 #include "markdown.h"
 #include "stack.h"
 #include "token.h"
@@ -35,8 +34,8 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Stack inline_stack;
-  if (create_stack(&inline_stack, sizeof(InlineElement *)) < 0) {
+  Stack line_elements;
+  if (create_stack(&line_elements, sizeof(Token *)) < 0) {
     free_token(ast);
     fclose(file);
     return EXIT_FAILURE;
@@ -47,7 +46,7 @@ int main(int argc, char **argv) {
     goto fail;
   }
 
-  if (process_file(file, &block_stack, &inline_stack, ast) < 0) {
+  if (process_file(file, &block_stack, &line_elements, ast) < 0) {
     goto fail;
   }
 

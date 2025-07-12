@@ -7,6 +7,7 @@ typedef enum {
   DOCUMENT,
   HEADING,
   PARAGRAPH,
+  LINE,
   TEXT,
   BOLD,
   ITALIC,
