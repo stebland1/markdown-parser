@@ -42,12 +42,21 @@ int pop(Stack *stack, void *out) {
   return 0;
 }
 
-void *peek_stack(Stack *stack) {
+void *peek_stack_raw(Stack *stack) {
   if (stack->count == 0) {
     return NULL;
   }
 
   return (char *)stack->items + ((stack->count - 1) * stack->item_size);
+}
+
+void *peek_stack_value(Stack *stack) {
+  void *item = peek_stack_raw(stack);
+  if (!item) {
+    return NULL;
+  }
+
+  return *(void **)item;
 }
 
 void free_stack(Stack *stack) {

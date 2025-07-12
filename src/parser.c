@@ -71,17 +71,16 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
       break;
     case LINE_TYPE_PARAGRAPH: {
-      Token **active_block = peek_stack(ctx->block_stack);
-      if (active_block && (*active_block)->type == DOCUMENT &&
-          paragraph_block_start(ctx) < 0) {
+      Token *active_block = peek_stack_value(ctx->block_stack);
+      if (active_block->type == DOCUMENT && paragraph_block_start(ctx) < 0) {
         return -1;
       }
       // fall through!
     }
     default: {
-      Token **active_block = peek_stack(ctx->block_stack);
+      Token *active_block = peek_stack_value(ctx->block_stack);
       assert(active_block != NULL);
-      assert((*active_block)->type != DOCUMENT);
+      assert(active_block->type != DOCUMENT);
 
       Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
       if (!line_tok) {
@@ -93,7 +92,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
         return -1;
       }
 
-      if (add_child_to_token(*active_block, line_tok) < 0) {
+      if (add_child_to_token(active_block, line_tok) < 0) {
         return -1;
       }
       break;

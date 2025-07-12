@@ -1,12 +1,8 @@
 #include "parser.h"
+#include "utils/stack.h"
 
 int blank_line_block_start(ParserContext *ctx) {
-  Token **active_block_ptr = peek_stack(ctx->block_stack);
-  if (!active_block_ptr) {
-    return -1;
-  }
-
-  Token *active_block = *active_block_ptr;
+  Token *active_block = peek_stack_value(ctx->block_stack);
   // Ensures we don't pop the root AST node from the stack.
   if (active_block->type == DOCUMENT) {
     return 0;

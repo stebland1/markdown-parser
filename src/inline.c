@@ -52,9 +52,8 @@ void free_inline_element(InlineElement *elem) {
 
 // Before pushing to the inline stack, we need to append prev and next
 int push_to_inline_stack(Stack *inline_stack, InlineElement *element) {
-  InlineElement **prev_ptr = peek_stack(inline_stack);
-  if (prev_ptr) {
-    InlineElement *prev_item = *prev_ptr;
+  InlineElement *prev_item = peek_stack_value(inline_stack);
+  if (prev_item) {
     element->prev = prev_item;
     prev_item->next = element;
   }
@@ -85,8 +84,7 @@ int flush_text_buf(char *buf, size_t *len, Stack *inline_stack) {
   buf[*len] = '\0';
   *len = 0;
 
-  InlineElement **prev_ptr = peek_stack(inline_stack);
-  InlineElement *prev = (prev_ptr ? *prev_ptr : NULL);
+  InlineElement *prev = peek_stack_value(inline_stack);
 
   // Try to concatenate with the prev text token (if there is one).
   if (prev && prev->type == TOKEN && prev->token->type == TEXT) {
