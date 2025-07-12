@@ -1,7 +1,7 @@
-#include "debug.h"
 #include "markdown.h"
-#include "stack.h"
 #include "token.h"
+#include "utils/debug.h"
+#include "utils/stack.h"
 #include <stdio.h>
 #include <stdlib.h>
 

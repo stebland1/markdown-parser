@@ -1,8 +1,8 @@
 #include "inline.h"
 #include "emphasis.h"
-#include "stack.h"
 #include "token.h"
-#include "utils.h"
+#include "utils/stack.h"
+#include "utils/utils.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>

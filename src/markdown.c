@@ -1,8 +1,8 @@
 #include "markdown.h"
 #include "inline.h"
-#include "stack.h"
 #include "token.h"
-#include "utils.h"
+#include "utils/stack.h"
+#include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stddef.h>

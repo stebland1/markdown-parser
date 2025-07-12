@@ -1,7 +1,7 @@
 #include "front_matter.h"
 #include "inline.h"
-#include "stack.h"
-#include "utils.h"
+#include "utils/stack.h"
+#include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>

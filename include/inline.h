@@ -1,8 +1,8 @@
 #ifndef INLINE_H
 #define INLINE_H
 
-#include "stack.h"
 #include "token.h"
+#include "utils/stack.h"
 #include <stdint.h>
 
 #define MAX_DELIMITER_LEN 6

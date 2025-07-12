@@ -1,8 +1,8 @@
 #ifndef MARKDOWN_H
 #define MARKDOWN_H
 
-#include "stack.h"
 #include "token.h"
+#include "utils/stack.h"
 #include <stddef.h>
 #include <stdio.h>
 
