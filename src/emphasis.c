@@ -20,6 +20,15 @@ int can_close_emphasis(char *c, char *line) {
   return (*c == '\0') || isspace(*c) || ispunct(*c);
 }
 
+int is_matching_inline_delim(void *item, void *userdata) {
+  InlineElement *element = (InlineElement *)item;
+  Delimiter *target = (Delimiter *)userdata;
+
+  return element->type == DELIMITER &&
+         element->delimiter.symbol == target->symbol &&
+         element->delimiter.count == target->count;
+}
+
 TokenType get_emphasis_token_type(char symbol, int count) {
   TokenType token_type = UNKNOWN;
   switch (symbol) {
@@ -123,7 +132,8 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
 
   // From here on we know that this is a potential closing delimiter.
   Delimiter *close_delim = &elem->delimiter;
-  InlineElement *open_delim = find_open_delimiter(inline_stack, close_delim);
+  InlineElement *open_delim =
+      find_stack(inline_stack, is_matching_inline_delim, close_delim);
 
   // If we cannot find the matching delimiter,
   // then treat this current delimiter as text and continue.

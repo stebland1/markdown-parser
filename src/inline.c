@@ -61,36 +61,6 @@ int flush_text_buf(char *buf, size_t *len, Stack *inline_stack) {
   return 0;
 }
 
-int is_matching_delimiter(Delimiter *delim1, Delimiter *delim2) {
-  if (delim1->symbol != delim2->symbol) {
-    return -1;
-  }
-
-  if (delim1->count != delim2->count) {
-    return -1;
-  }
-
-  return 0;
-}
-
-InlineElement *find_open_delimiter(Stack *inline_stack,
-                                   Delimiter *close_delim) {
-  InlineElement *open_delim = NULL;
-  for (ssize_t i = inline_stack->count - 1; i >= 0; i--) {
-    InlineElement *item = NULL;
-    memcpy(&item, (char *)inline_stack->items + i * inline_stack->item_size,
-           sizeof(InlineElement *));
-
-    if (item->type == DELIMITER &&
-        is_matching_delimiter(&item->delimiter, close_delim) == 0) {
-      open_delim = item;
-      break;
-    }
-  }
-
-  return open_delim;
-}
-
 // check if the cur character is escaped i.e. followed by a backslash.
 // return 1 for true 0 for false.
 int is_escaped(char *c, char *line) {
