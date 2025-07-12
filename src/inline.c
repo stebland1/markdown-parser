@@ -12,55 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int concat_with_prev_token(char *line, InlineElement *prev) {
-  char *new_content = concat(2, prev->token->content, line);
-  if (!new_content) {
-    return -1;
-  }
-
-  free(prev->token->content);
-  prev->token->content = new_content;
-  return 0;
-}
-
-int flush_text_buf(char *buf, size_t *len, Stack *inline_stack) {
-  if (*len == 0) {
-    return 0;
-  }
-
-  buf[*len] = '\0';
-  *len = 0;
-
-  InlineElement *prev = peek_stack_value(inline_stack);
-
-  // Try to concatenate with the prev text token (if there is one).
-  if (prev && prev->type == TOKEN && prev->token->type == TEXT) {
-    if (concat_with_prev_token(buf, prev) < 0) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  Token *token = create_token(TEXT, 0, buf);
-  if (!token) {
-    return -1;
-  }
-
-  InlineElement *elem = create_inline_element(TOKEN, token);
-  if (!elem) {
-    free_token(token);
-    return -1;
-  }
-
-  if (push_to_inline_stack(inline_stack, elem) < 0) {
-    free_inline_element(elem);
-    return -1;
-  }
-
-  return 0;
-}
-
 // check if the cur character is escaped i.e. followed by a backslash.
 // return 1 for true 0 for false.
 int is_escaped(char *c, char *line) {
@@ -148,7 +99,7 @@ int parse_line(char *line, Token *line_token) {
     }
   }
 
-  if (flush_text_buf(text_buf, &text_buf_len, &inline_stack) < 0) {
+  if (flush_text_into_stack(text_buf, &text_buf_len, &inline_stack) < 0) {
     return -1;
   }
 

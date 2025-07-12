@@ -118,7 +118,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // If it can open push it immediately onto the stack.
   // The stack shouldn't ever contain closing delimiters.
   if (can_open) {
-    if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+    if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
       return NULL;
     }
 
@@ -141,7 +141,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     memset(&text_buf[*text_buf_len], symbol, count);
     *text_buf_len += count;
 
-    if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+    if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
       return NULL;
     }
 
@@ -151,7 +151,7 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
 
   free_inline_element(elem);
 
-  if (flush_text_buf(text_buf, text_buf_len, inline_stack) < 0) {
+  if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
     return NULL;
   }
 
