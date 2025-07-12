@@ -5,8 +5,8 @@ BIN_DIR = build
 FRONT_MATTER_TARGET = $(BIN_DIR)/md_front_matter
 MARKDOWN_TARGET = ${BIN_DIR}/md_markdown
 
-FRONT_MATTER_SRC = src/main_front_matter.c src/front_matter.c src/utils.c
-MARKDOWN_SRC = src/main_markdown.c src/markdown.c src/stack.c src/token.c src/inline.c src/emphasis.c src/utils.c src/debug.c
+FRONT_MATTER_SRC = src/main/front_matter.c src/front_matter.c src/utils.c
+MARKDOWN_SRC = src/main/markdown.c src/markdown.c src/stack.c src/token.c src/inline.c src/emphasis.c src/utils.c src/debug.c
 
 all: $(FRONT_MATTER_TARGET) $(MARKDOWN_TARGET)
 
