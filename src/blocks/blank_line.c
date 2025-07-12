@@ -1,4 +1,4 @@
-#include "markdown.h"
+#include "parser.h"
 
 int blank_line_block_start(ParserContext *ctx) {
   Token **active_block_ptr = peek_stack(ctx->block_stack);

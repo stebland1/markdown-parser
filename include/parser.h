@@ -1,5 +1,5 @@
-#ifndef MARKDOWN_H
-#define MARKDOWN_H
+#ifndef PARSER_H
+#define PARSER_H
 
 #include "token.h"
 #include "utils/stack.h"
@@ -12,7 +12,7 @@ typedef struct {
   int in_front_matter;
 } ParserContext;
 
-int process_file(FILE *file, ParserContext *ctx);
-int is_front_matter(char *line, ParserContext *ctx);
+int parse_file(FILE *file, ParserContext *ctx);
+int classify_line_type(char *line, ParserContext *ctx);
 
 #endif

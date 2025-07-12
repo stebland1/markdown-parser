@@ -3,7 +3,7 @@
 
 #define PARAGRAPH_GROWTH_FACTOR 4
 
-#include "markdown.h"
+#include "parser.h"
 
 int paragraph_block_start(ParserContext *ctx);
 

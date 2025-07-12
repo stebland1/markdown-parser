@@ -1,5 +1,5 @@
 #include "blocks/paragraph.h"
-#include "markdown.h"
+#include "parser.h"
 #include "token.h"
 #include "utils/stack.h"
 

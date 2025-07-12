@@ -1,4 +1,4 @@
-#include "markdown.h"
+#include "parser.h"
 #include "token.h"
 #include "utils/debug.h"
 #include "utils/stack.h"
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
       .in_front_matter = 0,
   };
 
-  if (process_file(file, &ctx) < 0) {
+  if (parse_file(file, &ctx) < 0) {
     goto fail;
   }
 
