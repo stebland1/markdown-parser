@@ -68,9 +68,9 @@ int reverse_stack(Stack *dst, Stack *src) {
   }
 
   while (!is_stack_empty(src)) {
-    void *tok = NULL;
-    pop(src, &tok);
-    push(dst, &tok);
+    void *item = NULL;
+    pop(src, &item);
+    push(dst, &item);
   }
 
   return 0;
