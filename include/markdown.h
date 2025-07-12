@@ -12,8 +12,5 @@ int parse_heading(char *line, Token **out);
 int handle_heading(char *line, Token *ast);
 int handle_paragraph(Stack *stack);
 int handle_blank_line(Stack *block_stack, Token *ast);
-void print_ast(Token *root, int level);
-void free_ast(Token *root);
-char *get_token_type_str(TokenType token_type);
 
 #endif

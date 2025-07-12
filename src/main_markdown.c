@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "markdown.h"
 #include "stack.h"
 #include "token.h"
