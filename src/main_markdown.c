@@ -34,19 +34,12 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Stack line_elements;
-  if (create_stack(&line_elements, sizeof(Token *)) < 0) {
-    free_token(ast);
-    fclose(file);
-    return EXIT_FAILURE;
-  }
-
   Token *doc_ptr = ast;
   if (push(&block_stack, &doc_ptr) < 0) {
     goto fail;
   }
 
-  if (process_file(file, &block_stack, &line_elements, ast) < 0) {
+  if (process_file(file, &block_stack, ast) < 0) {
     goto fail;
   }
 

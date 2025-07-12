@@ -205,7 +205,7 @@ int handle_unmatched_delimiter(InlineElement *delimiter, Stack *inline_stack) {
   return 0;
 }
 
-int parse_line(char *line, Stack *line_elements) {
+int parse_line(char *line, Token *line_token) {
   Stack inline_stack;
   if (create_stack(&inline_stack, sizeof(InlineElement *)) < 0) {
     return -1;
@@ -215,9 +215,6 @@ int parse_line(char *line, Stack *line_elements) {
   size_t text_buf_len = 0;
 
   char *p = line;
-
-  // iterate over every character in the line.
-  // and stop when we hit the end.
   while (*p) {
     switch (*p) {
     case '*':
@@ -242,9 +239,6 @@ int parse_line(char *line, Stack *line_elements) {
     return -1;
   }
 
-  Token **cur_line_ptr = peek_stack(line_elements);
-  Token *cur_line = (cur_line_ptr ? *cur_line_ptr : NULL);
-
   Stack reversed_inline_stack;
   if (reverse_stack(&reversed_inline_stack, &inline_stack)) {
     return -1;
@@ -263,7 +257,7 @@ int parse_line(char *line, Stack *line_elements) {
       continue;
     }
 
-    if (add_child_to_token(cur_line, cur->token) < 0) {
+    if (add_child_to_token(line_token, cur->token) < 0) {
       return -1;
     }
   }

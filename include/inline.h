@@ -24,7 +24,7 @@ typedef struct InlineElement {
   struct InlineElement *next;
 } InlineElement;
 
-int parse_line(char *line, Stack *line_elements);
+int parse_line(char *line, Token *line_token);
 int is_matching_delimiter(Delimiter *delim1, Delimiter *delim2);
 int is_escaped(char *c, char *line);
 InlineElement *create_inline_element(InlineElementType type, void *data);

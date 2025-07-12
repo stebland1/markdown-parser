@@ -30,18 +30,18 @@ int handle_paragraph(Stack *stack) {
   return 0;
 }
 
-int process_file(FILE *file, Stack *block_stack, Stack *line_elements,
-                 Token *ast) {
+int process_file(FILE *file, Stack *block_stack, Token *ast) {
   char line[MAX_LINE];
   int in_front_matter = 0;
 
   while (fgets(line, sizeof(line), file)) {
     if (is_front_matter(line, &in_front_matter) == 1)
       continue;
+
     line[strcspn(line, "\n")] = '\0';
 
     if (is_blank_line(line)) {
-      if (handle_blank_line(block_stack, line_elements, ast) < 0) {
+      if (handle_blank_line(block_stack, ast) < 0) {
         return -1;
       }
       continue;
@@ -54,53 +54,28 @@ int process_file(FILE *file, Stack *block_stack, Stack *line_elements,
       continue;
     }
 
-    Token **curblock_ptr = peek_stack(block_stack);
-    if (!curblock_ptr) {
+    Token **active_block = peek_stack(block_stack);
+    if (active_block && (*active_block)->type == DOCUMENT &&
+        handle_paragraph(block_stack) < 0) {
       return -1;
     }
 
-    Token *curblock = *curblock_ptr;
-    switch (curblock->type) {
-    case PARAGRAPH: {
-      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
-      if (!line_tok) {
-        free_stack(line_elements);
-        return -1;
-      }
+    active_block = peek_stack(block_stack);
+    assert(active_block != NULL);
+    assert((*active_block)->type != DOCUMENT);
 
-      if (push(line_elements, &line_tok) < 0) {
-        free(line_tok);
-        free_stack(line_elements);
-        return -1;
-      }
-
-      if (parse_line(line, line_elements) < 0) {
-        return -1;
-      }
-      break;
+    Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
+    if (!line_tok) {
+      return -1;
     }
-    default: {
-      if (handle_paragraph(block_stack) < 0) {
-        return -1;
-      }
 
-      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
-      if (!line_tok) {
-        free_stack(line_elements);
-        return -1;
-      }
-
-      if (push(line_elements, &line_tok) < 0) {
-        free(line_tok);
-        free_stack(line_elements);
-        return -1;
-      }
-
-      if (parse_line(line, line_elements) < 0) {
-        return -1;
-      }
-      break;
+    if (parse_line(line, line_tok) < 0) {
+      free_token(line_tok);
+      return -1;
     }
+
+    if (add_child_to_token(*active_block, line_tok) < 0) {
+      return -1;
     }
   }
 
@@ -137,7 +112,7 @@ int handle_heading(char *line, Token *ast) {
   return 0;
 }
 
-int handle_blank_line(Stack *block_stack, Stack *line_elements, Token *ast) {
+int handle_blank_line(Stack *block_stack, Token *ast) {
   Token **parent_block_ptr = peek_stack(block_stack);
   if (!parent_block_ptr) {
     return -1;
@@ -151,23 +126,6 @@ int handle_blank_line(Stack *block_stack, Stack *line_elements, Token *ast) {
 
   if (pop(block_stack, &parent_block) < 0) {
     return -1;
-  }
-
-  Stack reversed;
-  // Reverse the inline stack to ensure correct ordering of inline nodes.
-  if (reverse_stack(&reversed, line_elements) < 0) {
-    return -1;
-  }
-
-  while (!is_stack_empty(&reversed)) {
-    Token *cur = NULL;
-    pop(&reversed, &cur);
-
-    assert(cur->type == LINE);
-
-    if (add_child_to_token(parent_block, cur) < 0) {
-      return -1;
-    }
   }
 
   if (add_child_to_token(ast, parent_block) < 0) {
