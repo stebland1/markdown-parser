@@ -1,5 +1,7 @@
 #include "inline.h"
 #include "emphasis.h"
+#include "inline/element.h"
+#include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"
 #include "utils/utils.h"
@@ -9,61 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-InlineElement *create_inline_element(InlineElementType type, void *data) {
-  InlineElement *elem = malloc(sizeof(InlineElement));
-  if (!elem) {
-    return NULL;
-  }
-
-  elem->type = type;
-
-  switch (elem->type) {
-  case TOKEN:
-    elem->token = data;
-    break;
-  case DELIMITER:
-    elem->delimiter = *(Delimiter *)data;
-    break;
-  default:
-    free(elem);
-    return NULL;
-  }
-
-  return elem;
-}
-
-void free_inline_element(InlineElement *elem) {
-  if (!elem) {
-    return;
-  }
-
-  switch (elem->type) {
-  case TOKEN:
-    free_token(elem->token);
-    break;
-  case DELIMITER:
-    // Nothing to free
-    break;
-  }
-
-  free(elem);
-}
-
-// Before pushing to the inline stack, we need to append prev and next
-int push_to_inline_stack(Stack *inline_stack, InlineElement *element) {
-  InlineElement *prev_item = peek_stack_value(inline_stack);
-  if (prev_item) {
-    element->prev = prev_item;
-    prev_item->next = element;
-  }
-
-  if (push(inline_stack, &element) < 0) {
-    return -1;
-  }
-
-  return 0;
-}
 
 int concat_with_prev_token(char *line, InlineElement *prev) {
   char *new_content = concat(2, prev->token->content, line);

@@ -1,5 +1,7 @@
 #include "front_matter.h"
 #include "inline.h"
+#include "inline/element.h"
+#include "inline/stack.h"
 #include "utils/stack.h"
 #include "utils/utils.h"
 #include <assert.h>
