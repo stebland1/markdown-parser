@@ -17,6 +17,5 @@ void *peek_stack_raw(Stack *stack);
 void *peek_stack_value(Stack *stack);
 void free_stack(Stack *stack);
 int is_stack_empty(Stack *stack);
-int reverse_stack(Stack *dst, Stack *src);
 
 #endif

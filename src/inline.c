@@ -231,31 +231,20 @@ int parse_line(char *line, Token *line_token) {
     }
   }
 
-  // Everything from inline, should make its way into line elements.
-  // at this point, we should flush out the text_buf, into it's own TEXT node.
   if (flush_text_buf(text_buf, &text_buf_len, &inline_stack) < 0) {
     return -1;
   }
 
-  Stack reversed_inline_stack;
-  if (reverse_stack(&reversed_inline_stack, &inline_stack)) {
-    return -1;
-  }
-
-  while (!is_stack_empty(&reversed_inline_stack)) {
-    InlineElement *cur = NULL;
-    pop(&reversed_inline_stack, &cur);
-
-    assert(cur != NULL);
-
-    if (cur->type == DELIMITER) {
-      if (handle_unmatched_delimiter(cur, &reversed_inline_stack) < 0) {
+  for (ssize_t i = 0; i < inline_stack.count; i++) {
+    InlineElement *inline_element = ((InlineElement **)inline_stack.items)[i];
+    if (inline_element->type == DELIMITER) {
+      if (handle_unmatched_delimiter(inline_element, &inline_stack) < 0) {
         return -1;
       }
       continue;
     }
 
-    if (add_child_to_token(line_token, cur->token) < 0) {
+    if (add_child_to_token(line_token, inline_element->token) < 0) {
       return -1;
     }
   }
