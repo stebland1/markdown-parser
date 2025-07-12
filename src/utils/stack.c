@@ -1,4 +1,5 @@
 #include "utils/stack.h"
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -70,3 +71,14 @@ void free_stack(Stack *stack) {
 }
 
 int is_stack_empty(Stack *stack) { return stack->count == 0; }
+
+void *find_stack(Stack *stack, StackPredicate predicate, void *userdata) {
+  for (ssize_t i = stack->count - 1; i >= 0; i--) {
+    void *item = ((void **)stack->items)[i];
+    if (predicate(item, userdata)) {
+      return item;
+    }
+  }
+
+  return NULL;
+}
