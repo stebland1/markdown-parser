@@ -10,8 +10,10 @@ int create_emphasis_token(TokenType token_type, InlineElement **children,
                           size_t children_len, Stack *inline_stack);
 char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
                       Stack *inline_stack);
-int can_open_emphasis(char *c, char *line);
-int can_close_emphasis(char *c, char *line);
 int is_matching_inline_delim(void *item, void *userdata);
+int is_punctuation(char c);
+int is_whitespace(char c);
+void classify_delimiter_runs(char *start, char *end, char *line, int *can_open,
+                             int *can_close);
 
 #endif

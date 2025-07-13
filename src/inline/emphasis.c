@@ -10,16 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// check if the cur char can be interpreted as an opening emphasis tag
-// such as '*' or '_'
-int can_open_emphasis(char *c, char *line) {
-  return (c == line) || isspace(*(c - 1)) || ispunct(*(c - 1));
-}
-
-int can_close_emphasis(char *c, char *line) {
-  return (*c == '\0') || isspace(*c) || ispunct(*c);
-}
-
 int is_matching_inline_delim(void *item, void *userdata) {
   InlineElement *element = (InlineElement *)item;
   Delimiter *target = (Delimiter *)userdata;
@@ -72,6 +62,31 @@ int create_emphasis_token(TokenType token_type, InlineElement **children,
   return 0;
 }
 
+int is_punctuation(char c) { return ispunct(c) || c == '\0'; }
+int is_whitespace(char c) { return isspace(c) || c == '\0'; }
+
+void classify_delimiter_runs(char *start, char *end, char *line, int *can_open,
+                             int *can_close) {
+  char before = start > line ? *(start - 1) : '\0';
+  char after = *end;
+
+  int after_is_whitespace = is_whitespace(after);
+  int after_is_punctuation = is_punctuation(after);
+  int before_is_whitespace = is_whitespace(before);
+  int before_is_punctuation = is_punctuation(before);
+
+  int is_left_flanking =
+      !after_is_whitespace &&
+      (!after_is_punctuation || before_is_whitespace || before_is_punctuation);
+
+  int is_right_flanking =
+      !before_is_whitespace &&
+      (!before_is_punctuation || after_is_whitespace || before_is_punctuation);
+
+  *can_open = is_left_flanking;
+  *can_close = is_right_flanking;
+}
+
 char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
                       Stack *inline_stack) {
   // If it's escaped, skip trying to parse.
@@ -81,9 +96,9 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     return c;
   }
 
+  char *start = c;
   char symbol = *c;
   int count = 1;
-  int can_open = can_open_emphasis(c, line);
 
   c++;
   while (*c == symbol) {
@@ -97,7 +112,10 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
     return c;
   }
 
-  int can_close = can_close_emphasis(c, line);
+  char *end = c;
+  int can_open = 0;
+  int can_close = 0;
+  classify_delimiter_runs(start, end, line, &can_open, &can_close);
 
   // If the delim can be an open and close simultaneously
   // we know for sure it's an invalid delimiter.
