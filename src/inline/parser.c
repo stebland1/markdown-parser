@@ -80,8 +80,14 @@ int parse_line(char *line, Token *line_token) {
       p++;
       text_buf[text_buf_len] = '\0';
       text_buf_len = 0;
-      Token *token = create_token(LINK, 1, text_buf, NULL);
-      create_inline_element(TOKEN, token);
+      Token *link_token = create_token(LINK, 1, text_buf, NULL);
+      if (!link_token) {
+        return -1;
+      }
+      if (create_inline_element(TOKEN, link_token) < 0) {
+        free_token(link_token);
+        return -1;
+      }
 
       size_t buf_len = 0;
       InlineElement *children_buf[64];
@@ -104,14 +110,19 @@ int parse_line(char *line, Token *line_token) {
       free_inline_element(matching_delimiter);
 
       for (ssize_t i = 0; i < buf_len; i++) {
-        if (add_child_to_token(token, children_buf[i]->token) < 0) {
-          free_token(token);
+        if (add_child_to_token(link_token, children_buf[i]->token) < 0) {
+          free_token(link_token);
           return -1;
         }
       }
 
-      InlineElement *link_element = create_inline_element(TOKEN, token);
+      InlineElement *link_element = create_inline_element(TOKEN, link_token);
+      if (!link_element) {
+        free_token(link_token);
+        return -1;
+      }
       if (push_to_inline_stack(&inline_stack, link_element) < 0) {
+        free_token(link_token);
         return -1;
       }
       break;
