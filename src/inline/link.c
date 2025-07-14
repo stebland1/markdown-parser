@@ -11,66 +11,65 @@ int is_open_link_delimiter(void *item, void *userdata) {
          element->delimiter.symbol == OPEN_SQUARE_BRACKET;
 }
 
-char *parse_link(char *c, Stack *inline_stack, char *text_buf,
-                 size_t *text_buf_len) {
+int parse_link(InlineParserContext *ctx) {
   InlineElement *matching_delimiter =
-      find_stack(inline_stack, is_open_link_delimiter, NULL);
+      find_stack(ctx->inline_stack, is_open_link_delimiter, NULL);
   if (!matching_delimiter) {
-    text_buf[(*text_buf_len)++] = *c++;
-    return c;
+    ctx->text_buf[ctx->text_buf_len++] = *ctx->c++;
+    return 0;
   }
 
-  if (*(c + 1) == '\0' || *(c + 1) != '(') {
-    text_buf[(*text_buf_len)++] = *c++;
-    return c;
+  if (*(ctx->c + 1) == '\0' || *(ctx->c + 1) != '(') {
+    ctx->text_buf[ctx->text_buf_len++] = *ctx->c++;
+    return 0;
   }
 
-  if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
-    return NULL;
+  if (flush_text_into_stack(ctx) < 0) {
+    return -1;
   }
 
-  c += 2;
-  while (*c && *c != ')') {
-    text_buf[(*text_buf_len)++] = *c;
-    c++;
+  ctx->c += 2;
+  while (*ctx->c && *ctx->c != ')') {
+    ctx->text_buf[ctx->text_buf_len++] = *ctx->c;
+    ctx->c++;
   }
 
-  if (*c == '\0') {
-    return c;
+  if (*ctx->c == '\0') {
+    return 0;
   }
 
-  c++;
-  text_buf[(*text_buf_len)] = '\0';
-  *text_buf_len = 0;
+  ctx->c++;
+  ctx->text_buf[ctx->text_buf_len] = '\0';
+  ctx->text_buf_len = 0;
 
-  Token *link_token = create_token(LINK, 1, text_buf, NULL);
+  Token *link_token = create_token(LINK, 1, ctx->text_buf, NULL);
   if (!link_token) {
-    return NULL;
+    return -1;
   }
 
   size_t buf_len = 0;
   InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
-  if (pop_until_delimiter(children_buf, &buf_len, inline_stack,
+  if (pop_until_delimiter(children_buf, &buf_len, ctx->inline_stack,
                           matching_delimiter) < 0) {
-    return NULL;
+    return -1;
   }
   free_inline_element(matching_delimiter);
 
   for (size_t i = 0; i < buf_len; i++) {
     if (add_child_to_token(link_token, children_buf[i]->token) < 0) {
       free_token(link_token);
-      return NULL;
+      return -1;
     }
   }
 
   InlineElement *link_element = create_inline_element(TOKEN, link_token);
   if (!link_element) {
     free_token(link_token);
-    return NULL;
+    return -1;
   }
-  if (push_to_inline_stack(inline_stack, link_element) < 0) {
+  if (push_to_inline_stack(ctx->inline_stack, link_element) < 0) {
     free_token(link_token);
-    return NULL;
+    return -1;
   }
-  return c;
+  return 0;
 }

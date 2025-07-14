@@ -86,44 +86,43 @@ void classify_delimiter_runs(char *start, char *end, char *line, int *can_open,
   *can_close = is_right_flanking;
 }
 
-char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
-                      Stack *inline_stack) {
+char *handle_emphasis(InlineParserContext *ctx) {
   // If it's escaped, skip trying to parse.
   // Treat as a normal character.
-  if (is_escaped(c, line)) {
-    text_buf[(*text_buf_len)++] = *c++;
-    return c;
+  if (is_escaped(ctx->c, ctx->line)) {
+    ctx->text_buf[ctx->text_buf_len++] = *ctx->c++;
+    return 0;
   }
 
-  char *start = c;
-  char symbol = *c;
+  char *start = ctx->c;
+  char symbol = *ctx->c;
   int count = 1;
 
-  c++;
-  while (*c == symbol) {
+  ctx->c++;
+  while (*ctx->c == symbol) {
     count++;
-    c++;
+    ctx->c++;
   }
 
   if (count > MAX_DELIMITER_LEN) {
-    memset(&text_buf[*text_buf_len], symbol, count);
-    *text_buf_len += count;
-    return c;
+    memset(&ctx->text_buf[ctx->text_buf_len], symbol, count);
+    ctx->text_buf_len += count;
+    return 0;
   }
 
-  char *end = c;
+  char *end = ctx->c;
   int can_open = 0;
   int can_close = 0;
-  classify_delimiter_runs(start, end, line, &can_open, &can_close);
+  classify_delimiter_runs(start, end, ctx->line, &can_open, &can_close);
 
   // If the delim can be an open and close simultaneously
   // we know for sure it's an invalid delimiter.
   // Same goes for if it can't be either, (open OR close).
   // Treat it as a normal char and continue.
   if ((can_close && can_open) || (!can_close && !can_open)) {
-    memset(&text_buf[*text_buf_len], symbol, count);
-    *text_buf_len += count;
-    return c;
+    memset(&ctx->text_buf[ctx->text_buf_len], symbol, count);
+    ctx->text_buf_len += count;
+    return 0;
   }
 
   Delimiter delimiter = {.symbol = symbol, .count = count};
@@ -135,40 +134,40 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // If it can open push it immediately onto the stack.
   // The stack shouldn't ever contain closing delimiters.
   if (can_open) {
-    if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
+    if (flush_text_into_stack(ctx) < 0) {
       return NULL;
     }
 
-    if (push_to_inline_stack(inline_stack, elem) < 0) {
+    if (push_to_inline_stack(ctx->inline_stack, elem) < 0) {
       free_inline_element(elem);
       return NULL;
     }
 
-    return c;
+    return 0;
   }
 
   // From here on we know that this is a potential closing delimiter.
   Delimiter *close_delim = &elem->delimiter;
   InlineElement *open_delim =
-      find_stack(inline_stack, is_matching_inline_delim, close_delim);
+      find_stack(ctx->inline_stack, is_matching_inline_delim, close_delim);
 
   // If we cannot find the matching delimiter,
   // then treat this current delimiter as text and continue.
   if (!open_delim) {
-    memset(&text_buf[*text_buf_len], symbol, count);
-    *text_buf_len += count;
+    memset(&ctx->text_buf[ctx->text_buf_len], symbol, count);
+    ctx->text_buf_len += count;
 
-    if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
+    if (flush_text_into_stack(ctx) < 0) {
       return NULL;
     }
 
     free_inline_element(elem);
-    return c;
+    return 0;
   }
 
   free_inline_element(elem);
 
-  if (flush_text_into_stack(text_buf, text_buf_len, inline_stack) < 0) {
+  if (flush_text_into_stack(ctx) < 0) {
     return NULL;
   }
 
@@ -178,8 +177,8 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   size_t buf_len = 0;
   InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
 
-  if (pop_until_delimiter(children_buf, &buf_len, inline_stack, open_delim) <
-      0) {
+  if (pop_until_delimiter(children_buf, &buf_len, ctx->inline_stack,
+                          open_delim) < 0) {
     return NULL;
   }
   TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
@@ -187,10 +186,10 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   assert(token_type != UNKNOWN);
   free_inline_element(open_delim);
 
-  if (create_emphasis_token(token_type, children_buf, buf_len, inline_stack) <
-      0) {
+  if (create_emphasis_token(token_type, children_buf, buf_len,
+                            ctx->inline_stack) < 0) {
     return NULL;
   }
 
-  return c;
+  return 0;
 }

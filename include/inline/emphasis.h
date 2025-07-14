@@ -2,14 +2,14 @@
 #define EMPHASIS_H
 
 #include "inline/element.h"
+#include "inline/parser.h"
 #include "token.h"
 #include "utils/stack.h"
 
 TokenType get_emphasis_token_type(char symbol, int count);
 int create_emphasis_token(TokenType token_type, InlineElement **children,
                           size_t children_len, Stack *inline_stack);
-char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
-                      Stack *inline_stack);
+char *handle_emphasis(InlineParserContext *ctx);
 int is_matching_inline_delim(void *item, void *userdata);
 int is_punctuation(char c);
 int is_whitespace(char c);
