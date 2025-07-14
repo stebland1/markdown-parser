@@ -4,7 +4,8 @@
 #include "utils/stack.h"
 
 int paragraph_block_start(ParserContext *ctx) {
-  Token *paragraph = create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL);
+  Token *paragraph =
+      create_token(PARAGRAPH, PARAGRAPH_GROWTH_FACTOR, NULL, NULL);
   if (!paragraph) {
     return -1;
   }

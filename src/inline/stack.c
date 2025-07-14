@@ -48,7 +48,7 @@ int flush_text_into_stack(char *buf, size_t *len, Stack *inline_stack) {
     return 0;
   }
 
-  Token *token = create_token(TEXT, 0, buf);
+  Token *token = create_token(TEXT, 0, buf, NULL);
   if (!token) {
     return -1;
   }

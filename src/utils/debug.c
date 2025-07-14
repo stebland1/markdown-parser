@@ -55,6 +55,13 @@ void print_ast(Token *root, int level) {
     printf("content: \"%s\"\n", root->content);
   }
 
+  if (root->type == HEADING && root->meta != NULL) {
+    for (size_t i = 0; i < level + 1; i++) {
+      printf("  ");
+    }
+    printf("level: \"%d\"\n", root->meta->heading.level);
+  }
+
   for (size_t i = 0; i < root->child_count; i++) {
     print_ast(root->children[i], level + 1);
   }

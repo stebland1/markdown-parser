@@ -40,7 +40,7 @@ TokenType get_emphasis_token_type(char symbol, int count) {
 
 int create_emphasis_token(TokenType token_type, InlineElement **children,
                           size_t children_len, Stack *inline_stack) {
-  Token *token = create_token(token_type, children_len, NULL);
+  Token *token = create_token(token_type, children_len, NULL, NULL);
   for (size_t i = 0; i < children_len; i++) {
     if (add_child_to_token(token, children[i]->token) < 0) {
       free_token(token);

@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Token *ast = create_token(DOCUMENT, INITIAL_DOCUMENT_SIZE, NULL);
+  Token *ast = create_token(DOCUMENT, INITIAL_DOCUMENT_SIZE, NULL, NULL);
   if (!ast) {
     return EXIT_FAILURE;
   }

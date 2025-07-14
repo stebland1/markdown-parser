@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-Token *create_token(TokenType type, size_t child_capacity, char *content) {
+Token *create_token(TokenType type, size_t child_capacity, char *content,
+                    void *meta) {
   Token *token = malloc(sizeof(Token));
   if (!token) {
     return NULL;
@@ -15,12 +16,29 @@ Token *create_token(TokenType type, size_t child_capacity, char *content) {
   token->children = NULL;
   token->child_count = 0;
   token->child_capacity = 0;
-  token->level = 0;
+  token->meta = NULL;
+
+  if (meta) {
+    token->meta = malloc(sizeof(TokenMeta));
+    if (!token->meta) {
+      free_token(token);
+      return NULL;
+    }
+
+    switch (type) {
+    case HEADING:
+      token->meta->heading = *(HeadingData *)meta;
+      break;
+    default:
+      free(token->meta);
+      break;
+    }
+  }
 
   if (child_capacity > 0) {
     token->children = malloc(sizeof(Token *) * child_capacity);
     if (!token->children) {
-      free(token);
+      free_token(token);
       return NULL;
     }
     token->child_capacity = child_capacity;
@@ -29,8 +47,8 @@ Token *create_token(TokenType type, size_t child_capacity, char *content) {
   if (content) {
     token->content = strdup(content);
     if (!token->content) {
-      free(token->children);
-      free(token);
+      free_token(token);
+      return NULL;
     }
   }
 
@@ -45,6 +63,7 @@ void free_token(Token *token) {
     free_token(token->children[i]);
   }
 
+  free(token->meta);
   free(token->children);
   free(token->content);
   free(token);

@@ -82,7 +82,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
       assert(active_block != NULL);
       assert(active_block->type != DOCUMENT);
 
-      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL);
+      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL, NULL);
       if (!line_tok) {
         return -1;
       }

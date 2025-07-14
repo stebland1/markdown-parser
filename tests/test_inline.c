@@ -6,7 +6,7 @@
 #include <string.h> // IWYU pragma: keep
 
 Token *create_and_parse_line_token(const char *input) {
-  Token *line_token = create_token(LINE, 1, NULL);
+  Token *line_token = create_token(LINE, 1, NULL, NULL);
   int result = parse_line((char *)input, line_token);
   assert(result == 0);
   return line_token;

@@ -14,12 +14,11 @@ int heading_block_start(char *line, ParserContext *ctx) {
   while (isspace(*line))
     line++;
 
-  Token *token = create_token(HEADING, 0, line);
+  HeadingData meta = {.level = level};
+  Token *token = create_token(HEADING, 0, line, &meta);
   if (!token) {
     return -1;
   }
-
-  token->level = level;
 
   if (add_child_to_token(ctx->ast, token)) {
     free_token(token);
