@@ -21,8 +21,8 @@ int is_matching_inline_delim(void *item, void *userdata) {
 TokenType get_emphasis_token_type(char symbol, int count) {
   TokenType token_type = UNKNOWN;
   switch (symbol) {
-  case '_':
-  case '*':
+  case UNDERSCORE:
+  case ASTERISK:
     switch (count) {
     case 2:
       token_type = BOLD;

@@ -1,5 +1,7 @@
+#include "inline/parser.h"
 #include "inline/element.h"
 #include "inline/emphasis.h"
+#include "inline/link.h"
 #include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"
@@ -20,11 +22,6 @@ int is_escaped(char *c, char *line) {
   return *(c - 1) == '\\';
 }
 
-int is_open_link_delimiter(void *item, void *userdata) {
-  InlineElement *element = (InlineElement *)item;
-  return element->type == DELIMITER && element->delimiter.symbol == '[';
-}
-
 int parse_line(char *line, Token *line_token) {
   Stack inline_stack;
   if (create_stack(&inline_stack, sizeof(InlineElement *)) < 0) {
@@ -37,8 +34,8 @@ int parse_line(char *line, Token *line_token) {
   char *p = line;
   while (*p) {
     switch (*p) {
-    case '[': {
-      Delimiter delimiter = {.symbol = '[', .count = 1};
+    case OPEN_SQUARE_BRACKET: {
+      Delimiter delimiter = {.symbol = OPEN_SQUARE_BRACKET, .count = 1};
       InlineElement *open_link_delimiter_element =
           create_inline_element(DELIMITER, &delimiter);
 
@@ -49,75 +46,16 @@ int parse_line(char *line, Token *line_token) {
       p++;
       break;
     };
-    case ']': {
-      InlineElement *matching_delimiter =
-          find_stack(&inline_stack, is_open_link_delimiter, NULL);
-      if (!matching_delimiter) {
-        text_buf[text_buf_len++] = *p++;
-        continue;
-      }
-
-      if (*(p + 1) == '\0' || *(p + 1) != '(') {
-        text_buf[text_buf_len++] = *p++;
-        continue;
-      }
-
-      if (flush_text_into_stack(text_buf, &text_buf_len, &inline_stack) < 0) {
+    case CLOSE_SQUARE_BRACKET: {
+      char *new_ptr = parse_link(p, &inline_stack, text_buf, &text_buf_len);
+      if (!new_ptr) {
         return -1;
       }
-
-      p += 2;
-      while (*p && *p != ')') {
-        text_buf[text_buf_len++] = *p;
-        p++;
-      }
-
-      if (*p == '\0') {
-        continue;
-      }
-
-      p++;
-      text_buf[text_buf_len] = '\0';
-      text_buf_len = 0;
-
-      Token *link_token = create_token(LINK, 1, text_buf, NULL);
-      if (!link_token) {
-        return -1;
-      }
-
-      if (create_inline_element(TOKEN, link_token) < 0) {
-        free_token(link_token);
-        return -1;
-      }
-
-      size_t buf_len = 0;
-      InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
-      if (pop_until_delimiter(children_buf, &buf_len, &inline_stack,
-                              matching_delimiter) < 0) {
-        return -1;
-      }
-      free_inline_element(matching_delimiter);
-
-      for (ssize_t i = 0; i < buf_len; i++) {
-        if (add_child_to_token(link_token, children_buf[i]->token) < 0) {
-          free_token(link_token);
-          return -1;
-        }
-      }
-
-      InlineElement *link_element = create_inline_element(TOKEN, link_token);
-      if (!link_element) {
-        free_token(link_token);
-        return -1;
-      }
-      if (push_to_inline_stack(&inline_stack, link_element) < 0) {
-        free_token(link_token);
-        return -1;
-      }
+      p = new_ptr;
       break;
     }
-    case '*':
-    case '_': {
+    case ASTERISK:
+    case UNDERSCORE: {
       char *new_ptr =
           handle_emphasis(p, line, text_buf, &text_buf_len, &inline_stack);
       if (!new_ptr) {
