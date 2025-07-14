@@ -1,6 +1,8 @@
 #include "utils/stack.h"
 #include "inline/element.h"
+#include "inline/stack.h"
 #include "utils/utils.h"
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -112,6 +114,32 @@ int merge_unmatched_delimiters(InlineElement *delimiter, Stack *inline_stack) {
     next->token->content = new_content;
     return 0;
   }
+
+  return 0;
+}
+
+int pop_until_delimiter(InlineElement **buf, size_t *buf_len, Stack *stack,
+                        InlineElement *delimiter) {
+  InlineElement *cur = NULL;
+
+  do {
+    if (pop(stack, &cur) < 0) {
+      for (size_t i = 0; i < *buf_len; i++) {
+        free_inline_element(buf[i]);
+      }
+      return -1;
+    }
+
+    if (cur != delimiter) {
+      if (*buf_len >= MAX_CHLD_BUF_SIZE) {
+        free_inline_element(cur);
+        return -1;
+      }
+      buf[(*buf_len)++] = cur;
+    }
+  } while (cur != delimiter);
+
+  reverse_list(buf, *buf_len, sizeof(InlineElement *));
 
   return 0;
 }

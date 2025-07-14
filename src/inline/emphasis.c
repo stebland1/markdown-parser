@@ -3,7 +3,6 @@
 #include "inline/parser.h"
 #include "inline/stack.h"
 #include "utils/stack.h"
-#include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -177,23 +176,12 @@ char *handle_emphasis(char *c, char *line, char *text_buf, size_t *text_buf_len,
   // Everything between open_delim to close_delim (exclusive)
   // should be its children.
   size_t buf_len = 0;
-  InlineElement *children_buf[64];
-  InlineElement *cur = NULL;
+  InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
 
-  do {
-    if (pop(inline_stack, &cur) < 0) {
-      for (size_t i = 0; i < buf_len; i++) {
-        free_inline_element(children_buf[i]);
-      }
-      return NULL;
-    }
-
-    if (cur != open_delim) {
-      children_buf[buf_len++] = cur;
-    }
-  } while (cur != open_delim);
-
-  reverse_list(children_buf, buf_len, sizeof(InlineElement *));
+  if (pop_until_delimiter(children_buf, &buf_len, inline_stack, open_delim) <
+      0) {
+    return NULL;
+  }
   TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
                                                  open_delim->delimiter.count);
   assert(token_type != UNKNOWN);

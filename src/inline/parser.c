@@ -3,7 +3,6 @@
 #include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"
-#include "utils/utils.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -80,33 +79,23 @@ int parse_line(char *line, Token *line_token) {
       p++;
       text_buf[text_buf_len] = '\0';
       text_buf_len = 0;
+
       Token *link_token = create_token(LINK, 1, text_buf, NULL);
       if (!link_token) {
         return -1;
       }
+
       if (create_inline_element(TOKEN, link_token) < 0) {
         free_token(link_token);
         return -1;
       }
 
       size_t buf_len = 0;
-      InlineElement *children_buf[64];
-      InlineElement *cur = NULL;
-
-      do {
-        if (pop(&inline_stack, &cur) < 0) {
-          for (size_t i = 0; i < buf_len; i++) {
-            free_inline_element(children_buf[i]);
-          }
-          return -1;
-        }
-
-        if (cur != matching_delimiter) {
-          children_buf[buf_len++] = cur;
-        }
-      } while (cur != matching_delimiter);
-
-      reverse_list(children_buf, buf_len, sizeof(InlineElement *));
+      InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
+      if (pop_until_delimiter(children_buf, &buf_len, &inline_stack,
+                              matching_delimiter) < 0) {
+        return -1;
+      }
       free_inline_element(matching_delimiter);
 
       for (ssize_t i = 0; i < buf_len; i++) {
