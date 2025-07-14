@@ -10,6 +10,7 @@ typedef enum {
   LINE,
   TEXT,
   BOLD,
+  LINK,
   ITALIC,
   UNKNOWN,
 } TokenType;

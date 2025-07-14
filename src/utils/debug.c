@@ -31,6 +31,8 @@ char *get_token_type_str(TokenType token_type) {
     return "BOLD";
   case ITALIC:
     return "ITALIC";
+  case LINK:
+    return "LINK";
   default:
     return "UNKNOWN";
   }

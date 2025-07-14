@@ -76,3 +76,19 @@ TEST(parse_bold_nested_italic) {
 
   return 0;
 }
+
+TEST(parse_basic_link) {
+  Token *line_token = PARSE_LINE("[link](https://github.com)");
+
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(line_token));
+  ASSERT_INT_EQUALS(LINK, CHILD_TYPE(line_token, 0));
+
+  Token *link_token = CHILD(line_token, 0);
+  ASSERT_STR_EQ("https://github.com", CONTENT(link_token));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(link_token));
+  ASSERT_STR_EQ("link", CHILD_CONTENT(link_token, 0));
+
+  free_token(line_token);
+
+  return 0;
+}
