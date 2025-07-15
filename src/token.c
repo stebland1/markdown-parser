@@ -29,6 +29,9 @@ Token *create_token(TokenType type, size_t child_capacity, char *content,
     case HEADING:
       token->meta->heading = *(HeadingData *)meta;
       break;
+    case LIST:
+      token->meta->list = *(ListData *)meta;
+      break;
     default:
       free(token->meta);
       break;

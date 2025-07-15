@@ -11,6 +11,8 @@ typedef enum {
   TEXT,
   BOLD,
   LINK,
+  LIST,
+  LIST_ITEM,
   ITALIC,
   UNKNOWN,
 } TokenType;
@@ -19,8 +21,14 @@ typedef struct HeadingData {
   unsigned int level;
 } HeadingData;
 
+typedef struct ListData {
+  char symbol;
+  int indentation;
+} ListData;
+
 typedef union TokenMeta {
   HeadingData heading;
+  ListData list;
 } TokenMeta;
 
 typedef struct Token {

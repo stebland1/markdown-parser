@@ -14,5 +14,6 @@ typedef struct {
 
 int parse_file(FILE *file, ParserContext *ctx);
 int classify_line_type(char *line, ParserContext *ctx);
+int flush_current_active_block(ParserContext *ctx);
 
 #endif

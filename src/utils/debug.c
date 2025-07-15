@@ -27,6 +27,10 @@ char *get_token_type_str(TokenType token_type) {
     return "PARAGRAPH";
   case LINE:
     return "LINE";
+  case LIST:
+    return "LIST";
+  case LIST_ITEM:
+    return "LIST ITEM";
   case BOLD:
     return "BOLD";
   case ITALIC:
@@ -62,6 +66,17 @@ void print_ast(Token *root, int level) {
       printf("  ");
     }
     printf("level: \"%d\"\n", root->meta->heading.level);
+  }
+
+  if (root->type == LIST && root->meta != NULL) {
+    for (size_t i = 0; i < level + 1; i++) {
+      printf("  ");
+    }
+    printf("Symbol: \"%c\"\n", root->meta->list.symbol);
+    for (size_t i = 0; i < level + 1; i++) {
+      printf("  ");
+    }
+    printf("Indentation: \"%d\"\n", root->meta->list.indentation);
   }
 
   for (size_t i = 0; i < root->child_count; i++) {
