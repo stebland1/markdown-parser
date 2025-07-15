@@ -1,13 +1,17 @@
 #ifndef LIST_H
 #define LIST_H
 
-#include "parser.h"
+#include "context.h"
 #include "token.h"
 
 #define LIST_GROWTH_FACTOR 4
 
-int list_block_start(ListData *data, ParserContext *ctx);
-int add_list_item_to_list(char *line, ParserContext *ctx);
 char *get_list_item(char *c, ListData *data);
+Token *create_list_token(ParserContext *ctx, char *content, ListData *meta);
+int add_parent_list_only(ParserContext *ctx, Token *token, void *_);
+int handle_list_item(ParserContext *ctx, char *line);
+int stop_when_indentation_is_equal(Token *token, void *userdata);
+int is_nested_list(ListData *current, Token *active);
+Token *push_new_list_token(ParserContext *ctx, char *list_item, ListData *data);
 
 #endif

@@ -17,6 +17,8 @@ typedef enum {
   UNKNOWN,
 } TokenType;
 
+typedef struct Token Token;
+
 typedef struct HeadingData {
   unsigned int level;
 } HeadingData;
@@ -24,6 +26,8 @@ typedef struct HeadingData {
 typedef struct ListData {
   char symbol;
   int indentation;
+  int parent;
+  Token *last;
 } ListData;
 
 typedef union TokenMeta {

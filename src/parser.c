@@ -85,27 +85,9 @@ int parse_file(FILE *file, ParserContext *ctx) {
         return -1;
       }
 
-      ListData list_data;
-      Token *active_block = peek_stack_value(&ctx->block_stack);
-      char *list_item = get_list_item(line, &list_data);
-
-      if (active_block->type == LIST &&
-          (list_data.symbol != active_block->meta->list.symbol ||
-           list_data.indentation != active_block->meta->list.indentation)) {
-        if (flush_list(ctx) < 0) {
-          return -1;
-        }
-      }
-
-      active_block = peek_stack_value(&ctx->block_stack);
-      if (active_block->type != LIST && list_block_start(&list_data, ctx) < 0) {
+      if (handle_list_item(ctx, line) < 0) {
         return -1;
       }
-
-      if (add_list_item_to_list(list_item, ctx) < 0) {
-        return -1;
-      }
-
       break;
     }
     case LINE_TYPE_PARAGRAPH: {

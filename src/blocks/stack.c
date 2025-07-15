@@ -13,12 +13,20 @@ int flush_paragraph(ParserContext *ctx) {
   return flush_stack(ctx, stop_at_non_paragraph, NULL, NULL);
 }
 
+int add_parent_list_only(ParserContext *ctx, Token *token, void *_) {
+  if (token->type == LIST && token->meta->list.parent == 0) {
+    return 0;
+  }
+
+  return add_child_to_token(ctx->ast, token);
+}
+
 int flush_list(ParserContext *ctx) {
-  return flush_stack(ctx, stop_at_non_list, NULL, NULL);
+  return flush_stack(ctx, stop_at_non_list, add_parent_list_only, NULL);
 }
 
 int flush_remaining_blocks(ParserContext *ctx) {
-  return flush_stack(ctx, NULL, NULL, NULL);
+  return flush_stack(ctx, NULL, add_parent_list_only, NULL);
 }
 
 int flush_stack(ParserContext *ctx, FlushPredicate stop_when,
