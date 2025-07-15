@@ -2,7 +2,6 @@
 #include "parser.h"
 #include "token.h"
 #include "utils/debug.h"
-#include "utils/stack.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,23 +29,6 @@ int main(int argc, char **argv) {
 
   if (parse_file(file, &ctx) < 0) {
     goto fail;
-  }
-
-  // flush what's left in the stack
-  while (!is_stack_empty(&ctx.block_stack)) {
-    Token *top_ptr = NULL;
-    if (pop(&ctx.block_stack, &top_ptr) < 0) {
-      goto fail;
-    }
-
-    // don't attach the root node to itself.
-    if (top_ptr->type == DOCUMENT) {
-      break;
-    }
-
-    if (add_child_to_token(ctx.ast, top_ptr) < 0) {
-      goto fail;
-    }
   }
 
   print_ast(ctx.ast, 0);

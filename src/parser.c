@@ -161,5 +161,22 @@ int parse_file(FILE *file, ParserContext *ctx) {
     }
   }
 
+  // flush what's left in the stack
+  while (!is_stack_empty(&ctx->block_stack)) {
+    Token *top_ptr = NULL;
+    if (pop(&ctx->block_stack, &top_ptr) < 0) {
+      return -1;
+    }
+
+    // don't attach the root node to itself.
+    if (top_ptr->type == DOCUMENT) {
+      break;
+    }
+
+    if (add_child_to_token(ctx->ast, top_ptr) < 0) {
+      return -1;
+    }
+  }
+
   return 0;
 }
