@@ -2,6 +2,8 @@
 #include "blocks/heading.h"
 #include "blocks/list.h"
 #include "blocks/paragraph.h"
+#include "blocks/stack.h"
+#include "context.h"
 #include "inline/parser.h"
 #include "token.h"
 #include "utils/debug.h"
@@ -24,25 +26,6 @@ typedef enum {
   LINE_TYPE_PARAGRAPH,
   LINE_TYPE_LIST,
 } LineType;
-
-int flush_current_active_block(ParserContext *ctx) {
-  Token *active_block = peek_stack_value(&ctx->block_stack);
-
-  // Ensures we don't pop the root AST node from the stack.
-  if (active_block->type == DOCUMENT) {
-    return 0;
-  }
-
-  if (pop(&ctx->block_stack, &active_block) < 0) {
-    return -1;
-  }
-
-  if (add_child_to_token(ctx->ast, active_block) < 0) {
-    return -1;
-  }
-
-  return 0;
-}
 
 int classify_line_type(char *line, ParserContext *ctx) {
   if (*line == '#') {
@@ -87,9 +70,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
     case LINE_TYPE_FRONT_MATTER:
       break;
     case LINE_TYPE_BLANK: {
-      Token *active_block = peek_stack_value(&ctx->block_stack);
-      if (active_block->type == PARAGRAPH &&
-          flush_current_active_block(ctx) < 0) {
+      if (flush_paragraph(ctx) < 0) {
         return -1;
       }
       break;
@@ -100,19 +81,18 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
       break;
     case LINE_TYPE_LIST: {
-      Token *active_block = peek_stack_value(&ctx->block_stack);
-      if (active_block->type != LIST && flush_current_active_block(ctx) < 0) {
+      if (flush_paragraph(ctx) < 0) {
         return -1;
       }
 
       ListData list_data;
-      active_block = peek_stack_value(&ctx->block_stack);
+      Token *active_block = peek_stack_value(&ctx->block_stack);
       char *list_item = get_list_item(line, &list_data);
 
       if (active_block->type == LIST &&
           (list_data.symbol != active_block->meta->list.symbol ||
            list_data.indentation != active_block->meta->list.indentation)) {
-        if (flush_current_active_block(ctx) < 0) {
+        if (flush_list(ctx) < 0) {
           return -1;
         }
       }
@@ -131,7 +111,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
     case LINE_TYPE_PARAGRAPH: {
       Token *active_block = peek_stack_value(&ctx->block_stack);
       if (active_block->type != PARAGRAPH) {
-        if (flush_current_active_block(ctx) < 0) {
+        if (flush_list(ctx) < 0) {
           return -1;
         }
         if (paragraph_block_start(ctx) < 0) {
@@ -161,22 +141,6 @@ int parse_file(FILE *file, ParserContext *ctx) {
     }
   }
 
-  // flush what's left in the stack
-  while (!is_stack_empty(&ctx->block_stack)) {
-    Token *top_ptr = NULL;
-    if (pop(&ctx->block_stack, &top_ptr) < 0) {
-      return -1;
-    }
-
-    // don't attach the root node to itself.
-    if (top_ptr->type == DOCUMENT) {
-      break;
-    }
-
-    if (add_child_to_token(ctx->ast, top_ptr) < 0) {
-      return -1;
-    }
-  }
-
+  flush_remaining_blocks(ctx);
   return 0;
 }
