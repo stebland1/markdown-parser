@@ -26,15 +26,14 @@ typedef enum {
 } LineType;
 
 int flush_current_active_block(ParserContext *ctx) {
-  Token *active_block = peek_stack_value(ctx->block_stack);
-  printf("Flushing item: %s\n", get_token_type_str(active_block->type));
+  Token *active_block = peek_stack_value(&ctx->block_stack);
 
   // Ensures we don't pop the root AST node from the stack.
   if (active_block->type == DOCUMENT) {
     return 0;
   }
 
-  if (pop(ctx->block_stack, &active_block) < 0) {
+  if (pop(&ctx->block_stack, &active_block) < 0) {
     return -1;
   }
 
@@ -88,7 +87,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
     case LINE_TYPE_FRONT_MATTER:
       break;
     case LINE_TYPE_BLANK: {
-      Token *active_block = peek_stack_value(ctx->block_stack);
+      Token *active_block = peek_stack_value(&ctx->block_stack);
       if (active_block->type == PARAGRAPH &&
           flush_current_active_block(ctx) < 0) {
         return -1;
@@ -101,13 +100,13 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
       break;
     case LINE_TYPE_LIST: {
-      Token *active_block = peek_stack_value(ctx->block_stack);
+      Token *active_block = peek_stack_value(&ctx->block_stack);
       if (active_block->type != LIST && flush_current_active_block(ctx) < 0) {
         return -1;
       }
 
       ListData list_data;
-      active_block = peek_stack_value(ctx->block_stack);
+      active_block = peek_stack_value(&ctx->block_stack);
       char *list_item = get_list_item(line, &list_data);
 
       if (active_block->type == LIST &&
@@ -118,7 +117,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
         }
       }
 
-      active_block = peek_stack_value(ctx->block_stack);
+      active_block = peek_stack_value(&ctx->block_stack);
       if (active_block->type != LIST && list_block_start(&list_data, ctx) < 0) {
         return -1;
       }
@@ -130,7 +129,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
       break;
     }
     case LINE_TYPE_PARAGRAPH: {
-      Token *active_block = peek_stack_value(ctx->block_stack);
+      Token *active_block = peek_stack_value(&ctx->block_stack);
       if (active_block->type != PARAGRAPH) {
         if (flush_current_active_block(ctx) < 0) {
           return -1;
@@ -140,7 +139,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
         }
       }
 
-      active_block = peek_stack_value(ctx->block_stack);
+      active_block = peek_stack_value(&ctx->block_stack);
       assert(active_block != NULL);
       assert(active_block->type != DOCUMENT);
 

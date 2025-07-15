@@ -1,5 +1,4 @@
 #include "blocks/paragraph.h"
-#include "parser.h"
 #include "token.h"
 #include "utils/stack.h"
 
@@ -10,7 +9,7 @@ int paragraph_block_start(ParserContext *ctx) {
     return -1;
   }
 
-  if (push(ctx->block_stack, &paragraph) < 0) {
+  if (push(&ctx->block_stack, &paragraph) < 0) {
     free_token(paragraph);
     return -1;
   }

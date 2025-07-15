@@ -1,5 +1,4 @@
 #include "blocks/list.h"
-#include "parser.h"
 #include "token.h"
 #include <assert.h>
 #include <ctype.h>
@@ -42,7 +41,7 @@ int list_block_start(ListData *data, ParserContext *ctx) {
     return -1;
   }
 
-  if (push(ctx->block_stack, &list_token) < 0) {
+  if (push(&ctx->block_stack, &list_token) < 0) {
     free_token(list_token);
     return -1;
   }
@@ -51,7 +50,7 @@ int list_block_start(ListData *data, ParserContext *ctx) {
 }
 
 int add_list_item_to_list(char *list_item, ParserContext *ctx) {
-  Token *active_block = peek_stack_value(ctx->block_stack);
+  Token *active_block = peek_stack_value(&ctx->block_stack);
 
   assert(list_item != NULL);
   assert(active_block->type == LIST);

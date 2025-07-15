@@ -1,11 +1,10 @@
+#include "context.h"
 #include "parser.h"
 #include "token.h"
 #include "utils/debug.h"
 #include "utils/stack.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#define INITIAL_DOCUMENT_SIZE 6
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -23,37 +22,20 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Token *ast = create_token(DOCUMENT, INITIAL_DOCUMENT_SIZE, NULL, NULL);
-  if (!ast) {
-    return EXIT_FAILURE;
-  }
-
-  Stack block_stack;
-  if (create_stack(&block_stack, sizeof(Token *)) < 0) {
-    free_token(ast);
+  ParserContext ctx;
+  if (init_parser_context(&ctx) < 0) {
     fclose(file);
     return EXIT_FAILURE;
   }
-
-  Token *doc_ptr = ast;
-  if (push(&block_stack, &doc_ptr) < 0) {
-    goto fail;
-  }
-
-  ParserContext ctx = {
-      .block_stack = &block_stack,
-      .ast = ast,
-      .in_front_matter = 0,
-  };
 
   if (parse_file(file, &ctx) < 0) {
     goto fail;
   }
 
   // flush what's left in the stack
-  while (!is_stack_empty(&block_stack)) {
+  while (!is_stack_empty(&ctx.block_stack)) {
     Token *top_ptr = NULL;
-    if (pop(&block_stack, &top_ptr) < 0) {
+    if (pop(&ctx.block_stack, &top_ptr) < 0) {
       goto fail;
     }
 
@@ -62,21 +44,19 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (add_child_to_token(ast, top_ptr) < 0) {
+    if (add_child_to_token(ctx.ast, top_ptr) < 0) {
       goto fail;
     }
   }
 
-  print_ast(ast, 0);
+  print_ast(ctx.ast, 0);
 
-  free_token(ast);
-  free_stack(&block_stack);
+  free_parser_context(&ctx);
   fclose(file);
   return EXIT_SUCCESS;
 
 fail:
-  free_token(ast);
-  free_stack(&block_stack);
+  free_parser_context(&ctx);
   fclose(file);
   return EXIT_FAILURE;
 }
