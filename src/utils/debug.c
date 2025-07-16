@@ -39,6 +39,8 @@ char *get_token_type_str(TokenType token_type) {
     return "ITALIC";
   case LINK:
     return "LINK";
+  case IMAGE:
+    return "IMAGE";
   default:
     return "UNKNOWN";
   }

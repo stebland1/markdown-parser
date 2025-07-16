@@ -33,6 +33,12 @@ Token *create_token(TokenType type, size_t child_capacity, char *content,
     case LIST:
       token->meta->list = *(ListData *)meta;
       break;
+    case LINK:
+      token->meta->link = *(LinkData *)meta;
+      break;
+    case IMAGE:
+      token->meta->image = *(ImageData *)meta;
+      break;
     default:
       free(token->meta);
       break;
@@ -65,6 +71,19 @@ void free_token(Token *token) {
 
   for (size_t i = 0; i < token->child_count; ++i) {
     free_token(token->children[i]);
+  }
+
+  if (token->meta) {
+    switch (token->type) {
+    case LINK:
+      free(token->meta->link.href);
+      break;
+    case IMAGE:
+      free(token->meta->image.src);
+      break;
+    default:
+      break;
+    }
   }
 
   free(token->meta);

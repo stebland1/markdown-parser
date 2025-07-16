@@ -32,9 +32,19 @@ typedef struct ListData {
   Token *last;
 } ListData;
 
+typedef struct LinkData {
+  char *href;
+} LinkData;
+
+typedef struct ImageData {
+  char *src;
+} ImageData;
+
 typedef union TokenMeta {
   HeadingData heading;
   ListData list;
+  LinkData link;
+  ImageData image;
 } TokenMeta;
 
 typedef struct Token {

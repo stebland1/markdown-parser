@@ -84,7 +84,7 @@ TEST(parse_basic_link) {
   ASSERT_INT_EQUALS(LINK, CHILD_TYPE(line_token, 0));
 
   Token *link_token = CHILD(line_token, 0);
-  ASSERT_STR_EQ("https://github.com", CONTENT(link_token));
+  ASSERT_STR_EQ("https://github.com", link_token->meta->link.href);
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(link_token));
   ASSERT_STR_EQ("link", CHILD_CONTENT(link_token, 0));
 
@@ -100,7 +100,7 @@ TEST(parse_basic_image) {
   ASSERT_INT_EQUALS(IMAGE, CHILD_TYPE(line_token, 0));
 
   Token *image_token = CHILD(line_token, 0);
-  ASSERT_STR_EQ("https://github.com", CONTENT(image_token));
+  ASSERT_STR_EQ("https://github.com", image_token->meta->image.src);
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(image_token));
   ASSERT_STR_EQ("image", CHILD_CONTENT(image_token, 0));
 
