@@ -39,8 +39,7 @@ int classify_line_type(char *line, ParserContext *ctx) {
     return LINE_TYPE_BLANK;
   }
 
-  ListData list_data;
-  if (get_list_item(line, &list_data)) {
+  if (parse_list_item(line, NULL)) {
     return LINE_TYPE_LIST;
   }
 

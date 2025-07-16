@@ -14,7 +14,8 @@ int flush_paragraph(ParserContext *ctx) {
 }
 
 int add_parent_list_only(ParserContext *ctx, Token *token, void *_) {
-  if (token->type == LIST && token->meta->list.parent == 0) {
+  if ((token->type == LIST || token->type == ORDERED_LIST) &&
+      token->meta->list.parent == 0) {
     return 0;
   }
 

@@ -2,41 +2,77 @@
 #include "blocks/stack.h"
 #include "context.h"
 #include "token.h"
+#include "utils/debug.h"
 #include "utils/stack.h"
 #include <assert.h>
 #include <ctype.h>
 
-char *get_list_item(char *c, ListData *data) {
+int is_unordered_list_item(char c) { return c == '-' || c == '+' || c == '*'; }
+
+char *handle_ordered_list_item(char *c, ListData *meta) {
+  if (!isdigit(*c)) {
+    return NULL;
+  }
+
+  while (isdigit(*c)) {
+    c++;
+  }
+
+  if (*c != '.' && *c != ')') {
+    return NULL;
+  }
+
+  c++;
+  if (isspace(*c)) {
+    if (meta) {
+      meta->symbol = *(c - 1);
+    }
+    return c + 1;
+  }
+
+  return NULL;
+}
+
+char *handle_unordered_list_item(char *c) {
+  c++;
+  while (isspace(*c)) {
+    c++;
+  }
+
+  if (*c == '\0') {
+    return NULL;
+  }
+
+  return c;
+}
+
+char *parse_list_item(char *c, ListData *meta) {
   int indentation = 0;
   while (isspace(*c)) {
     indentation++;
     c++;
   }
 
-  while (*c) {
-    switch (*c) {
-    case '-':
-    case '+':
-    case '*':
-      data->symbol = *c;
-      c++;
-      while (isspace(*c)) {
-        c++;
-      }
-
-      if (*c == '\0') {
-        return NULL;
-      }
-
-      data->indentation = indentation;
-      data->parent = 0;
-      return c;
-    default:
-      return NULL;
+  if (is_unordered_list_item(*c)) {
+    if (meta) {
+      meta->indentation = indentation;
+      meta->symbol = *c;
+      meta->parent = 0;
     }
+    return handle_unordered_list_item(c);
   }
 
-  return c;
+  char *list_item = handle_ordered_list_item(c, meta);
+  if (!list_item) {
+    return NULL;
+  }
+
+  if (meta) {
+    meta->indentation = indentation;
+    meta->parent = 0;
+  }
+
+  return list_item;
 }
 
 Token *create_list_token(ParserContext *ctx, char *content, ListData *meta) {
@@ -46,7 +82,10 @@ Token *create_list_token(ParserContext *ctx, char *content, ListData *meta) {
   }
 
   meta->last = list_item_token;
-  Token *list_token = create_token(LIST, LIST_GROWTH_FACTOR, NULL, meta);
+  int is_ordered = meta->symbol == '.' || meta->symbol == ')';
+  Token *list_token = create_token(is_ordered ? ORDERED_LIST : LIST,
+                                   LIST_GROWTH_FACTOR, NULL, meta);
+
   if (!list_token) {
     free_token(list_item_token);
     return NULL;
@@ -82,17 +121,17 @@ int is_nested_list(ListData *current, Token *active) {
 
 int stop_when_indentation_is_equal(Token *token, void *userdata) {
   ListData data = *(ListData *)userdata;
-  return token->type != LIST ||
+  return (token->type != LIST && token->type != ORDERED_LIST) ||
          token->meta->list.indentation == data.indentation ||
          token->meta->list.indentation == data.indentation + 1;
 }
 
 int handle_list_item(ParserContext *ctx, char *line) {
   ListData cur_list_item_data;
-  char *list_item = get_list_item(line, &cur_list_item_data);
+  char *list_item = parse_list_item(line, &cur_list_item_data);
   Token *active_block = peek_stack_value(&ctx->block_stack);
 
-  if (active_block->type != LIST) {
+  if (active_block->type != LIST && active_block->type != ORDERED_LIST) {
     cur_list_item_data.parent = 1;
     if (push_new_list_token(ctx, list_item, &cur_list_item_data) == NULL) {
       return -1;
@@ -136,7 +175,7 @@ int handle_list_item(ParserContext *ctx, char *line) {
     }
 
     active_block = peek_stack_value(&ctx->block_stack);
-    if (active_block->type == LIST) {
+    if (active_block->type == LIST || active_block->type == ORDERED_LIST) {
       Token *list_item_token = create_token(LIST_ITEM, 0, list_item, NULL);
       if (add_child_to_token(active_block, list_item_token) < 0) {
         return -1;

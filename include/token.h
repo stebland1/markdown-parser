@@ -12,6 +12,7 @@ typedef enum {
   BOLD,
   LINK,
   LIST,
+  ORDERED_LIST,
   LIST_ITEM,
   ITALIC,
   UNKNOWN,

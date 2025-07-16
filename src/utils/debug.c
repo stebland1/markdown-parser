@@ -29,6 +29,8 @@ char *get_token_type_str(TokenType token_type) {
     return "LINE";
   case LIST:
     return "LIST";
+  case ORDERED_LIST:
+    return "ORDERED_LIST";
   case LIST_ITEM:
     return "LIST ITEM";
   case BOLD:
@@ -68,7 +70,8 @@ void print_ast(Token *root, int level) {
     printf("level: \"%d\"\n", root->meta->heading.level);
   }
 
-  if (root->type == LIST && root->meta != NULL) {
+  if ((root->type == LIST || root->type == ORDERED_LIST) &&
+      root->meta != NULL) {
     for (size_t i = 0; i < level + 1; i++) {
       printf("  ");
     }
