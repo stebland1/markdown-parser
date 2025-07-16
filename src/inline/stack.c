@@ -75,7 +75,11 @@ int merge_unmatched_delimiters(InlineElement *delimiter, Stack *inline_stack) {
   InlineElement *next = delimiter->next;
 
   char buf[MAX_DELIMITER_LEN];
-  memset(buf, delimiter->delimiter.symbol, delimiter->delimiter.count);
+  char *p = buf;
+  if (delimiter->delimiter.prefix) {
+    memset(p++, delimiter->delimiter.prefix, 1);
+  }
+  memset(p, delimiter->delimiter.symbol, delimiter->delimiter.count);
 
   if (prev && next) {
     char *new_content =

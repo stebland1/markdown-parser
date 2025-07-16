@@ -7,6 +7,7 @@
 typedef struct {
   char symbol; // the actual delimiter i.e. *.
   int count;   // the number of them i.e. 2.
+  char prefix;
 } Delimiter;
 
 typedef enum { TOKEN, DELIMITER } InlineElementType;

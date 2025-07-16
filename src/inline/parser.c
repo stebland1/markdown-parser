@@ -1,7 +1,7 @@
 #include "inline/parser.h"
 #include "inline/element.h"
 #include "inline/emphasis.h"
-#include "inline/link.h"
+#include "inline/link_or_image.h"
 #include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"
@@ -15,6 +15,10 @@ int is_escaped(char *c, char *line) {
   }
 
   return *(c - 1) == '\\';
+}
+
+int is_image(InlineParserContext *ctx) {
+  return ctx->c > ctx->line && *(ctx->c - 1) == EXCLAMATION_MARK;
 }
 
 int parse_line(char *line, Token *line_token) {
@@ -32,8 +36,17 @@ int parse_line(char *line, Token *line_token) {
 
   while (*ctx.c) {
     switch (*ctx.c) {
+    case EXCLAMATION_MARK:
+      if (*(ctx.c + 1) == OPEN_SQUARE_BRACKET) {
+        ctx.c++;
+      } else {
+        ctx.text_buf[ctx.text_buf_len++] = *ctx.c++;
+      }
+      break;
     case OPEN_SQUARE_BRACKET: {
-      Delimiter delimiter = {.symbol = OPEN_SQUARE_BRACKET, .count = 1};
+      Delimiter delimiter = {.symbol = OPEN_SQUARE_BRACKET,
+                             .count = 1,
+                             .prefix = is_image(&ctx) ? *(ctx.c - 1) : 0};
       InlineElement *open_link_delimiter_element =
           create_inline_element(DELIMITER, &delimiter);
 
@@ -45,7 +58,7 @@ int parse_line(char *line, Token *line_token) {
       break;
     };
     case CLOSE_SQUARE_BRACKET: {
-      if (parse_link(&ctx) < 0) {
+      if (parse_link_or_image(&ctx) < 0) {
         return -1;
       }
       break;

@@ -10,6 +10,7 @@
 #define CLOSE_SQUARE_BRACKET ']'
 #define ASTERISK '*'
 #define UNDERSCORE '_'
+#define EXCLAMATION_MARK '!'
 
 typedef struct InlineParserContext {
   Stack *inline_stack;

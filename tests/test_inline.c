@@ -92,3 +92,19 @@ TEST(parse_basic_link) {
 
   return 0;
 }
+
+TEST(parse_basic_image) {
+  Token *line_token = PARSE_LINE("![image](https://github.com)");
+
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(line_token));
+  ASSERT_INT_EQUALS(IMAGE, CHILD_TYPE(line_token, 0));
+
+  Token *image_token = CHILD(line_token, 0);
+  ASSERT_STR_EQ("https://github.com", CONTENT(image_token));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(image_token));
+  ASSERT_STR_EQ("image", CHILD_CONTENT(image_token, 0));
+
+  free_token(line_token);
+
+  return 0;
+}

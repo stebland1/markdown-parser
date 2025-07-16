@@ -5,15 +5,15 @@
 #include "utils/stack.h"
 #include <stddef.h>
 
-int is_open_link_delimiter(void *item, void *userdata) {
+int is_open_delimiter(void *item, void *userdata) {
   InlineElement *element = (InlineElement *)item;
   return element->type == DELIMITER &&
          element->delimiter.symbol == OPEN_SQUARE_BRACKET;
 }
 
-int parse_link(InlineParserContext *ctx) {
+int parse_link_or_image(InlineParserContext *ctx) {
   InlineElement *matching_delimiter =
-      find_stack(ctx->inline_stack, is_open_link_delimiter, NULL);
+      find_stack(ctx->inline_stack, is_open_delimiter, NULL);
   if (!matching_delimiter) {
     ctx->text_buf[ctx->text_buf_len++] = *ctx->c++;
     return 0;
@@ -42,7 +42,9 @@ int parse_link(InlineParserContext *ctx) {
   ctx->text_buf[ctx->text_buf_len] = '\0';
   ctx->text_buf_len = 0;
 
-  Token *link_token = create_token(LINK, 1, ctx->text_buf, NULL);
+  int is_img = matching_delimiter->delimiter.prefix == EXCLAMATION_MARK;
+  TokenType type = is_img ? IMAGE : LINK;
+  Token *link_token = create_token(type, 1, ctx->text_buf, NULL);
   if (!link_token) {
     return -1;
   }
@@ -67,9 +69,11 @@ int parse_link(InlineParserContext *ctx) {
     free_token(link_token);
     return -1;
   }
+
   if (push_to_inline_stack(ctx->inline_stack, link_element) < 0) {
     free_token(link_token);
     return -1;
   }
+
   return 0;
 }

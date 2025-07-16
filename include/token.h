@@ -14,6 +14,7 @@ typedef enum {
   LIST,
   ORDERED_LIST,
   LIST_ITEM,
+  IMAGE,
   ITALIC,
   UNKNOWN,
 } TokenType;
