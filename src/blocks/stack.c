@@ -7,7 +7,9 @@ int stop_at_non_paragraph(Token *token, void *_) {
   return token->type != PARAGRAPH;
 }
 
-int stop_at_non_list(Token *token, void *_) { return token->type != LIST; }
+int stop_at_non_list(Token *token, void *_) {
+  return token->type != LIST && token->type != ORDERED_LIST;
+}
 
 int flush_paragraph(ParserContext *ctx) {
   return flush_stack(ctx, stop_at_non_paragraph, NULL, NULL);
