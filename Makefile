@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g -O0 -I./include
+CFLAGS = -Wall -g -O0 -I./include -fsanitize=address -fno-omit-frame-pointer
 BIN_DIR = build
 
 FRONT_MATTER_TARGET = $(BIN_DIR)/md_front_matter
