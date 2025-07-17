@@ -44,6 +44,10 @@ int parse_line(char *line, Token *line_token) {
       }
       break;
     case OPEN_SQUARE_BRACKET: {
+      if (flush_text_into_stack(&ctx) < 0) {
+        return -1;
+      }
+
       Delimiter delimiter = {.symbol = OPEN_SQUARE_BRACKET,
                              .count = 1,
                              .prefix = is_image(&ctx) ? *(ctx.c - 1) : 0};
