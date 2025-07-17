@@ -1,4 +1,5 @@
 #include "token.h"
+#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,6 +95,7 @@ void free_token(Token *token) {
 
 int add_child_to_token(Token *token, Token *child) {
   if (token->child_count == token->child_capacity) {
+    assert(token->child_capacity > 0);
     Token **new_items =
         realloc(token->children, sizeof(Token *) * (token->child_capacity * 2));
     if (!new_items) {
