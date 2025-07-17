@@ -90,35 +90,12 @@ int parse_file(FILE *file, ParserContext *ctx) {
       break;
     }
     case LINE_TYPE_PARAGRAPH: {
-      Token *active_block = peek_stack_value(&ctx->block_stack);
-      if (active_block->type != PARAGRAPH) {
-        if (flush_list(ctx) < 0) {
-          return -1;
-        }
-        if (paragraph_block_start(ctx) < 0) {
-          return -1;
-        }
-      }
-
-      active_block = peek_stack_value(&ctx->block_stack);
-      assert(active_block != NULL);
-      assert(active_block->type != DOCUMENT);
-
-      Token *line_tok = create_token(LINE, LINE_GROWTH_FACTOR, NULL, NULL);
-      if (!line_tok) {
+      if (handle_paragraph_line(ctx, line) < 0) {
         return -1;
       }
-
-      if (parse_line(line, line_tok) < 0) {
-        free_token(line_tok);
-        return -1;
-      }
-
-      if (add_child_to_token(active_block, line_tok) < 0) {
-        return -1;
-      }
-      break;
     }
+    default:
+      break;
     }
   }
 
