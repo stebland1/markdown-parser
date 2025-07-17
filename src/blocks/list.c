@@ -1,6 +1,7 @@
 #include "blocks/list.h"
 #include "blocks/stack.h"
 #include "context.h"
+#include "inline/parser.h"
 #include "token.h"
 #include "utils/debug.h"
 #include "utils/stack.h"
@@ -75,8 +76,18 @@ char *parse_list_item(char *c, ListData *meta) {
   return list_item;
 }
 
-Token *create_list_token(ParserContext *ctx, char *content, ListData *meta) {
-  Token *list_item_token = create_token(LIST_ITEM, 0, content, NULL);
+Token *create_list_item_token(char *list_item) {
+  Token *list_item_token = create_token(LIST_ITEM, 1, NULL, NULL);
+  if (parse_line(list_item, list_item_token) < 0) {
+    free_token(list_item_token);
+    return NULL;
+  }
+
+  return list_item_token;
+}
+
+Token *create_list_token(ParserContext *ctx, char *list_item, ListData *meta) {
+  Token *list_item_token = create_list_item_token(list_item);
   if (!list_item_token) {
     return NULL;
   }
@@ -176,7 +187,11 @@ int handle_list_item(ParserContext *ctx, char *line) {
 
     active_block = peek_stack_value(&ctx->block_stack);
     if (active_block->type == LIST || active_block->type == ORDERED_LIST) {
-      Token *list_item_token = create_token(LIST_ITEM, 0, list_item, NULL);
+      Token *list_item_token = create_list_item_token(list_item);
+      if (!list_item_token) {
+        return -1;
+      }
+
       if (add_child_to_token(active_block, list_item_token) < 0) {
         return -1;
       }
@@ -193,7 +208,7 @@ int handle_list_item(ParserContext *ctx, char *line) {
     return 0;
   }
 
-  Token *list_item_token = create_token(LIST_ITEM, 0, list_item, NULL);
+  Token *list_item_token = create_list_item_token(list_item);
   if (!list_item_token) {
     return -1;
   }

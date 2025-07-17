@@ -7,7 +7,8 @@
 #define LIST_GROWTH_FACTOR 4
 
 char *parse_list_item(char *c, ListData *meta);
-Token *create_list_token(ParserContext *ctx, char *content, ListData *meta);
+Token *create_list_token(ParserContext *ctx, char *list_item, ListData *meta);
+Token *create_list_item_token(char *list_item);
 int add_parent_list_only(ParserContext *ctx, Token *token, void *_);
 int handle_list_item(ParserContext *ctx, char *line);
 int stop_when_indentation_is_equal(Token *token, void *userdata);
