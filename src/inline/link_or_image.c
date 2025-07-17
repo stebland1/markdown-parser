@@ -4,12 +4,11 @@
 #include "inline/stack.h"
 #include "token.h"
 #include "utils/stack.h"
+#include "utils/utils.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int is_open_delimiter(void *item, void *userdata) {
   InlineElement *element = (InlineElement *)item;

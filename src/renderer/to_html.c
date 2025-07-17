@@ -25,6 +25,8 @@ char *get_tag_from_type(TokenType type, void *meta) {
     return "li";
   case IMAGE:
     return "img";
+  case CODE_BLOCK:
+    return "code";
   case HEADING: {
     HeadingData heading_meta = *(HeadingData *)meta;
     switch (heading_meta.level) {
@@ -102,6 +104,9 @@ void to_html(Token *root, Token *prev) {
   char *tag = get_tag_from_type(root->type, root->meta);
 
   if (tag) {
+    if (root->type == CODE_BLOCK) {
+      printf("<pre>");
+    }
     printf("<%s", tag);
     for (int i = 0; i < num_attributes; i++) {
       printf(" %s=\"%s\"", attributes[i].key, attributes[i].value);
@@ -129,6 +134,9 @@ void to_html(Token *root, Token *prev) {
 
   if (tag) {
     printf("</%s>", tag);
+    if (root->type == CODE_BLOCK) {
+      printf("</pre>");
+    }
   }
 
   free_attributes(attributes, num_attributes);

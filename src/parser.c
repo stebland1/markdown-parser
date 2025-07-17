@@ -1,13 +1,12 @@
 #include "parser.h"
+#include "blocks/code_block.h"
 #include "blocks/heading.h"
 #include "blocks/list.h"
 #include "blocks/paragraph.h"
 #include "blocks/stack.h"
 #include "context.h"
-#include "inline/parser.h"
 #include "token.h"
 #include "utils/debug.h"
-#include "utils/stack.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stddef.h>
@@ -16,8 +15,6 @@
 #include <string.h>
 
 #define FRONT_MATTER_DELIM "---"
-#define LINE_GROWTH_FACTOR 6
-#define MAX_LINE 256
 
 typedef enum {
   LINE_TYPE_FRONT_MATTER,
@@ -25,6 +22,9 @@ typedef enum {
   LINE_TYPE_HEADING,
   LINE_TYPE_PARAGRAPH,
   LINE_TYPE_LIST,
+  LINE_TYPE_CODE_BLOCK,
+  LINE_TYPE_CODE_BLOCK_CLOSE,
+  LINE_TYPE_CODE_BLOCK_OPEN,
 } LineType;
 
 int classify_line_type(char *line, ParserContext *ctx) {
@@ -35,8 +35,23 @@ int classify_line_type(char *line, ParserContext *ctx) {
   char *p = line;
   while (isspace(*line))
     line++;
+
   if (*p == '\0') {
     return LINE_TYPE_BLANK;
+  }
+
+  if (!ctx->code_block.parsing && strncmp(p, "```", 3) == 0) {
+    ctx->code_block.parsing = 1;
+    return LINE_TYPE_CODE_BLOCK_OPEN;
+  }
+
+  if (ctx->code_block.parsing && strncmp(line, "```", 3) == 0) {
+    ctx->code_block.parsing = 0;
+    return LINE_TYPE_CODE_BLOCK_CLOSE;
+  }
+
+  if (ctx->code_block.parsing) {
+    return LINE_TYPE_CODE_BLOCK;
   }
 
   if (parse_list_item(line, NULL)) {
@@ -66,8 +81,22 @@ int parse_file(FILE *file, ParserContext *ctx) {
 
     LineType line_type = classify_line_type(line, ctx);
     switch (line_type) {
-    case LINE_TYPE_FRONT_MATTER:
+    case LINE_TYPE_CODE_BLOCK_OPEN:
+      if (flush_paragraph(ctx) < 0) {
+        return -1;
+      }
+
+      // TODO: parse lang and put into code_block.meta
       break;
+    case LINE_TYPE_CODE_BLOCK: {
+      handle_code_block_line(ctx, line);
+      break;
+    }
+    case LINE_TYPE_CODE_BLOCK_CLOSE: {
+      if (handle_code_block_close(ctx) < 0) {
+        return -1;
+      }
+    }
     case LINE_TYPE_BLANK: {
       if (flush_paragraph(ctx) < 0) {
         return -1;

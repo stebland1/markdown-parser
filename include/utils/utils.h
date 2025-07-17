@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 void trim(char *str);
 char *escape_json_str(char *str);
 int is_blank_line(char *line);

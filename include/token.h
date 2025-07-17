@@ -16,6 +16,7 @@ typedef enum {
   LIST_ITEM,
   IMAGE,
   ITALIC,
+  CODE_BLOCK,
   UNKNOWN,
 } TokenType;
 

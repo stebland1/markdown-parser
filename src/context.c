@@ -23,6 +23,9 @@ int init_parser_context(ParserContext *ctx) {
   ctx->block_stack = block_stack;
   ctx->ast = ast;
   ctx->in_front_matter = 0;
+  ctx->code_block.parsing = 0;
+  ctx->code_block.buf[0] = '\0';
+  ctx->code_block.buf_len = 0;
 
   return 0;
 }
