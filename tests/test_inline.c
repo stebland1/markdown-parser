@@ -101,8 +101,7 @@ TEST(parse_basic_image) {
 
   Token *image_token = CHILD(line_token, 0);
   ASSERT_STR_EQ("https://github.com", image_token->meta->image.src);
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(image_token));
-  ASSERT_STR_EQ("image", CHILD_CONTENT(image_token, 0));
+  ASSERT_STR_EQ("image", image_token->meta->image.alt);
 
   free_token(line_token);
 

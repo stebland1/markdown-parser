@@ -77,6 +77,13 @@ int get_attributes(Token *token, Attribute *attributes) {
       return -1;
     }
     count++;
+    strcpy(attributes[count].key, "alt");
+    attributes[count].value = strdup(token->meta->image.alt);
+    if (!attributes[count].value) {
+      free(attributes[count - 1].value);
+      return -1;
+    }
+    count++;
     break;
   default:
     break;

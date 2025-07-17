@@ -38,6 +38,7 @@ typedef struct LinkData {
 
 typedef struct ImageData {
   char *src;
+  char *alt;
 } ImageData;
 
 typedef union TokenMeta {

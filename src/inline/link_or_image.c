@@ -1,3 +1,4 @@
+#include "inline/link_or_image.h"
 #include "inline/element.h"
 #include "inline/parser.h"
 #include "inline/stack.h"
@@ -5,7 +6,10 @@
 #include "utils/stack.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int is_open_delimiter(void *item, void *userdata) {
   InlineElement *element = (InlineElement *)item;
@@ -31,6 +35,36 @@ Token *create_image_token(InlineParserContext *ctx) {
   }
 
   return image_token;
+}
+
+int collect_image_alt_tag(InlineElement **child_buf, size_t child_buf_len,
+                          Token *token) {
+  char buf[SCREEN_READER_CAP];
+  size_t buf_len = 0;
+  buf[0] = '\0';
+
+  for (size_t i = 0; i < child_buf_len; i++) {
+    InlineElement *child = child_buf[i];
+
+    if (child->type == TOKEN && child->token->content != NULL) {
+      size_t content_len = strlen(child->token->content);
+      size_t n = MIN(SCREEN_READER_CAP - buf_len - 1, content_len);
+      memcpy(buf + buf_len, child->token->content, n);
+      buf_len += n;
+    }
+
+    if (buf_len == SCREEN_READER_CAP - 1) {
+      break;
+    }
+  }
+
+  buf[buf_len] = '\0';
+  token->meta->image.alt = strdup(buf);
+  if (!token->meta->image.alt) {
+    return -1;
+  }
+
+  return 0;
 }
 
 int parse_link_or_image(InlineParserContext *ctx) {
@@ -78,10 +112,16 @@ int parse_link_or_image(InlineParserContext *ctx) {
   }
   free_inline_element(matching_delimiter);
 
-  for (size_t i = 0; i < buf_len; i++) {
-    if (add_child_to_token(token, children_buf[i]->token) < 0) {
-      free_token(token);
+  if (is_img) {
+    if (collect_image_alt_tag(children_buf, buf_len, token) < 0) {
       return -1;
+    }
+  } else {
+    for (size_t i = 0; i < buf_len; i++) {
+      if (add_child_to_token(token, children_buf[i]->token) < 0) {
+        free_token(token);
+        return -1;
+      }
     }
   }
 
