@@ -131,13 +131,18 @@ char *concat(int n, ...) {
   if (!buf) {
     return NULL;
   }
+  size_t buf_len = 0;
+  buf[0] = '\0';
 
   va_start(args, n);
   for (size_t i = 0; i < n; i++) {
     char *s = va_arg(args, char *);
-    strcat(buf, s);
+    size_t len = strlen(s);
+    memcpy(buf + buf_len, s, len);
+    buf_len += len;
   }
   va_end(args);
 
+  buf[buf_len] = '\0';
   return buf;
 }
