@@ -1,4 +1,5 @@
 #include "inline/parser.h"
+#include "inline/code_span.h"
 #include "inline/element.h"
 #include "inline/emphasis.h"
 #include "inline/link_or_image.h"
@@ -36,6 +37,11 @@ int parse_line(char *line, Token *line_token) {
 
   while (*ctx.c) {
     switch (*ctx.c) {
+    case BACKTICK:
+      if (handle_code_span(&ctx) < 0) {
+        return -1;
+      }
+      break;
     case EXCLAMATION_MARK:
       if (*(ctx.c + 1) == OPEN_SQUARE_BRACKET) {
         ctx.c++;

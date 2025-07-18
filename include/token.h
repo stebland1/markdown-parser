@@ -17,6 +17,7 @@ typedef enum {
   IMAGE,
   ITALIC,
   CODE_BLOCK,
+  CODE_SPAN,
   UNKNOWN,
 } TokenType;
 
