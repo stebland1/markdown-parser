@@ -2,6 +2,7 @@
 #include "inline/element.h"
 #include "inline/parser.h"
 #include "inline/stack.h"
+#include "token.h"
 #include "utils/stack.h"
 #include <assert.h>
 #include <ctype.h>
@@ -38,8 +39,9 @@ TokenType get_emphasis_token_type(char symbol, int count) {
 }
 
 int create_emphasis_token(TokenType token_type, InlineElement **children,
-                          size_t children_len, Stack *inline_stack) {
-  Token *token = create_token(token_type, children_len, NULL, NULL);
+                          size_t children_len, Stack *inline_stack,
+                          EmphasisData *meta) {
+  Token *token = create_token(token_type, children_len, NULL, meta);
   for (size_t i = 0; i < children_len; i++) {
     if (add_child_to_token(token, children[i]->token) < 0) {
       free_token(token);
@@ -184,10 +186,13 @@ char *handle_emphasis(InlineParserContext *ctx) {
   TokenType token_type = get_emphasis_token_type(open_delim->delimiter.symbol,
                                                  open_delim->delimiter.count);
   assert(token_type != UNKNOWN);
+
+  EmphasisData meta = {.symbol = open_delim->delimiter.symbol,
+                       .count = open_delim->delimiter.count};
   free_inline_element(open_delim);
 
   if (create_emphasis_token(token_type, children_buf, buf_len,
-                            ctx->inline_stack) < 0) {
+                            ctx->inline_stack, &meta) < 0) {
     return NULL;
   }
 

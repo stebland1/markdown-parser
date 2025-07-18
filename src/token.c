@@ -40,6 +40,10 @@ Token *create_token(TokenType type, size_t child_capacity, char *content,
     case IMAGE:
       token->meta->image = *(ImageData *)meta;
       break;
+    case BOLD:
+    case ITALIC:
+      token->meta->emphasis = *(EmphasisData *)meta;
+      break;
     default:
       free(token->meta);
       break;

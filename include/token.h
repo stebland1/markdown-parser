@@ -43,11 +43,17 @@ typedef struct ImageData {
   char *alt;
 } ImageData;
 
+typedef struct EmphasisData {
+  char symbol;
+  int count;
+} EmphasisData;
+
 typedef union TokenMeta {
   HeadingData heading;
   ListData list;
   LinkData link;
   ImageData image;
+  EmphasisData emphasis;
 } TokenMeta;
 
 typedef struct Token {

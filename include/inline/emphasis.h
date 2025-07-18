@@ -8,7 +8,8 @@
 
 TokenType get_emphasis_token_type(char symbol, int count);
 int create_emphasis_token(TokenType token_type, InlineElement **children,
-                          size_t children_len, Stack *inline_stack);
+                          size_t children_len, Stack *inline_stack,
+                          EmphasisData *meta);
 char *handle_emphasis(InlineParserContext *ctx);
 int is_matching_inline_delim(void *item, void *userdata);
 int is_punctuation(char c);
