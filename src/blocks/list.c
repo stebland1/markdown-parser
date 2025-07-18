@@ -142,6 +142,8 @@ int handle_list_item(ParserContext *ctx, char *line) {
   char *list_item = parse_list_item(line, &cur_list_item_data);
   Token *active_block = peek_stack_value(&ctx->block_stack);
 
+  // Case 1.
+  // This is the first list item.
   if (active_block->type != LIST && active_block->type != ORDERED_LIST) {
     cur_list_item_data.parent = 1;
     if (push_new_list_token(ctx, list_item, &cur_list_item_data) == NULL) {
@@ -151,6 +153,8 @@ int handle_list_item(ParserContext *ctx, char *line) {
     return 0;
   }
 
+  // Case 2.
+  // This is the first list item of its kind.
   if (cur_list_item_data.symbol != active_block->meta->list.symbol) {
     if (flush_list(ctx) < 0) {
       return -1;
@@ -164,6 +168,8 @@ int handle_list_item(ParserContext *ctx, char *line) {
     return 0;
   }
 
+  // Case 3.
+  // List item is nested deeper.
   if (is_nested_list(&cur_list_item_data, active_block)) {
     Token *list_token =
         push_new_list_token(ctx, list_item, &cur_list_item_data);
@@ -179,6 +185,8 @@ int handle_list_item(ParserContext *ctx, char *line) {
     return 0;
   }
 
+  // Case 4.
+  // List item is nested shallower.
   if (cur_list_item_data.indentation < active_block->meta->list.indentation) {
     if (flush_stack(ctx, stop_when_indentation_is_equal, add_parent_list_only,
                     (void *)&cur_list_item_data) < 0) {
@@ -208,6 +216,8 @@ int handle_list_item(ParserContext *ctx, char *line) {
     return 0;
   }
 
+  // Case 5.
+  // It's simply another list item.
   Token *list_item_token = create_list_item_token(list_item);
   if (!list_item_token) {
     return -1;
