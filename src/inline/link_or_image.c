@@ -104,7 +104,7 @@ int parse_link_or_image(InlineParserContext *ctx) {
   }
 
   size_t buf_len = 0;
-  InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
+  InlineElement *children_buf[MAX_CHILD_BUF_SIZE];
   if (pop_until_delimiter(children_buf, &buf_len, ctx->inline_stack,
                           matching_delimiter) < 0) {
     return -1;

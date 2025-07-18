@@ -5,7 +5,7 @@
 #include "inline/parser.h"
 #include "utils/stack.h"
 
-#define MAX_CHLD_BUF_SIZE 64
+#define MAX_CHILD_BUF_SIZE 64
 
 int push_to_inline_stack(Stack *inline_stack, InlineElement *element);
 int flush_text_into_stack(InlineParserContext *ctx);

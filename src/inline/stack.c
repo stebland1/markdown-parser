@@ -136,7 +136,7 @@ int pop_until_delimiter(InlineElement **buf, size_t *buf_len, Stack *stack,
     }
 
     if (cur != delimiter) {
-      if (*buf_len >= MAX_CHLD_BUF_SIZE) {
+      if (*buf_len >= MAX_CHILD_BUF_SIZE) {
         free_inline_element(cur);
         return -1;
       }

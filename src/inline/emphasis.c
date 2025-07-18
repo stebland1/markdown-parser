@@ -177,7 +177,7 @@ char *handle_emphasis(InlineParserContext *ctx) {
   // Everything between open_delim to close_delim (exclusive)
   // should be its children.
   size_t buf_len = 0;
-  InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
+  InlineElement *children_buf[MAX_CHILD_BUF_SIZE];
 
   if (pop_until_delimiter(children_buf, &buf_len, ctx->inline_stack,
                           open_delim) < 0) {
