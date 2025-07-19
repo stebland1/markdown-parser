@@ -20,5 +20,6 @@ void *peek_stack_value(Stack *stack);
 void free_stack(Stack *stack);
 int is_stack_empty(Stack *stack);
 void *find_stack(Stack *stack, StackPredicate predicate, void *userdata);
+void remove_from_stack(Stack *stack, void *item);
 
 #endif

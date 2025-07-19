@@ -1,5 +1,6 @@
 #include "utils/stack.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -81,4 +82,25 @@ void *find_stack(Stack *stack, StackPredicate predicate, void *userdata) {
   }
 
   return NULL;
+}
+
+void remove_from_stack(Stack *stack, void *target) {
+  int index = -1;
+
+  for (int i = stack->count - 1; i >= 0; i--) {
+    void *item = (char *)stack->items + i * stack->item_size;
+    if (*(void **)item == target) {
+      index = i;
+      break;
+    }
+  }
+
+  if (index < 0) {
+    return;
+  }
+
+  void *item_to_remove = (char *)stack->items + index * stack->item_size;
+  memmove(item_to_remove, (char *)item_to_remove + stack->item_size,
+          (stack->count - index - 1) * stack->item_size);
+  stack->count--;
 }

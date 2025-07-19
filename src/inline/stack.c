@@ -92,9 +92,8 @@ int merge_unmatched_delimiters(InlineElement *delimiter, Stack *inline_stack) {
 
     // pop the `next` item as it's now been concatenated.
     free_inline_element(delimiter);
-    InlineElement *next_in_stack = NULL;
-    pop(inline_stack, &next_in_stack);
-    free_inline_element(next_in_stack);
+    remove_from_stack(inline_stack, next);
+    free_inline_element(next);
     return 0;
   }
 
