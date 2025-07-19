@@ -46,11 +46,11 @@ TEST(ordered_list) {
   ASSERT_SIZE_EQUALS(3, NUM_CHILDREN(list));
 
   ASSERT_INT_EQUALS(LIST_ITEM, CHILD_TYPE(list, 0));
-  ASSERT_STR_EQ("one", CHILD_CONTENT(list, 0));
+  ASSERT_STR_EQ("one", CHILD_CONTENT(CHILD(list, 0), 0));
   ASSERT_INT_EQUALS(LIST_ITEM, CHILD_TYPE(list, 1));
-  ASSERT_STR_EQ("two", CHILD_CONTENT(list, 1));
+  ASSERT_STR_EQ("two", CHILD_CONTENT(CHILD(list, 1), 0));
   ASSERT_INT_EQUALS(LIST_ITEM, CHILD_TYPE(list, 2));
-  ASSERT_STR_EQ("three", CHILD_CONTENT(list, 2));
+  ASSERT_STR_EQ("three", CHILD_CONTENT(CHILD(list, 2), 0));
 
   free_parser_context(&ctx);
 
@@ -69,31 +69,31 @@ TEST(ordered_nested_list) {
 
   Token *list_item = CHILD(list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item));
-  ASSERT_STR_EQ("one", CONTENT(list_item));
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item));
+  ASSERT_STR_EQ("one", CHILD_CONTENT(list_item, 0));
+  ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(list_item));
 
-  Token *nested_list = CHILD(list_item, 0);
+  Token *nested_list = CHILD(list_item, 1);
   ASSERT_INT_EQUALS(ORDERED_LIST, TYPE(nested_list));
   ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(nested_list));
 
   Token *list_item_2 = CHILD(nested_list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_2));
-  ASSERT_STR_EQ("two", CONTENT(list_item_2));
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_2));
+  ASSERT_STR_EQ("two", CHILD_CONTENT(list_item_2, 0));
+  ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(list_item_2));
 
-  Token *nested_list_2 = CHILD(list_item_2, 0);
+  Token *nested_list_2 = CHILD(list_item_2, 1);
   ASSERT_INT_EQUALS(ORDERED_LIST, TYPE(nested_list_2));
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(nested_list_2));
 
   Token *list_item_3 = CHILD(nested_list_2, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_3));
-  ASSERT_STR_EQ("three", CONTENT(list_item_3));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(list_item_3));
+  ASSERT_STR_EQ("three", CHILD_CONTENT(list_item_3, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_3));
 
   Token *list_item_4 = CHILD(nested_list, 1);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_4));
-  ASSERT_STR_EQ("four", CONTENT(list_item_4));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(list_item_4));
+  ASSERT_STR_EQ("four", CHILD_CONTENT(list_item_4, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_4));
 
   free_parser_context(&ctx);
 
@@ -107,9 +107,9 @@ TEST(unordered_list) {
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(ctx.ast));
   Token *list = CHILD(ctx.ast, 0);
   ASSERT_SIZE_EQUALS(3, NUM_CHILDREN(list));
-  ASSERT_STR_EQ("one", CHILD_CONTENT(list, 0));
-  ASSERT_STR_EQ("two", CHILD_CONTENT(list, 1));
-  ASSERT_STR_EQ("three", CHILD_CONTENT(list, 2));
+  ASSERT_STR_EQ("one", CHILD_CONTENT(CHILD(list, 0), 0));
+  ASSERT_STR_EQ("two", CHILD_CONTENT(CHILD(list, 1), 0));
+  ASSERT_STR_EQ("three", CHILD_CONTENT(CHILD(list, 2), 0));
 
   free_parser_context(&ctx);
 
@@ -121,9 +121,22 @@ TEST(multi_unordered_list) {
   parse_input("- one\n+ two\n\n* three\n", &ctx);
 
   ASSERT_SIZE_EQUALS(3, NUM_CHILDREN(ctx.ast));
-  ASSERT_STR_EQ("one", CHILD_CONTENT(CHILD(ctx.ast, 0), 0));
-  ASSERT_STR_EQ("two", CHILD_CONTENT(CHILD(ctx.ast, 1), 0));
-  ASSERT_STR_EQ("three", CHILD_CONTENT(CHILD(ctx.ast, 2), 0));
+
+  Token *list_one = CHILD(ctx.ast, 0);
+  Token *list_two = CHILD(ctx.ast, 1);
+  Token *list_three = CHILD(ctx.ast, 2);
+
+  ASSERT_INT_EQUALS(LIST, TYPE(list_one));
+  ASSERT_INT_EQUALS(LIST, TYPE(list_two));
+  ASSERT_INT_EQUALS(LIST, TYPE(list_three));
+
+  Token *list_one_text = CHILD(CHILD(list_one, 0), 0);
+  Token *list_two_text = CHILD(CHILD(list_two, 0), 0);
+  Token *list_three_text = CHILD(CHILD(list_three, 0), 0);
+
+  ASSERT_STR_EQ("one", CONTENT(list_one_text));
+  ASSERT_STR_EQ("two", CONTENT(list_two_text));
+  ASSERT_STR_EQ("three", CONTENT(list_three_text));
 
   free_parser_context(&ctx);
 
@@ -142,31 +155,31 @@ TEST(list_indentation) {
 
   Token *list_item = CHILD(list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item));
-  ASSERT_STR_EQ("one", CONTENT(list_item));
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item));
+  ASSERT_STR_EQ("one", CHILD_CONTENT(list_item, 0));
+  ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(list_item));
 
-  Token *nested_list = CHILD(list_item, 0);
+  Token *nested_list = CHILD(list_item, 1);
   ASSERT_INT_EQUALS(LIST, TYPE(nested_list));
   ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(nested_list));
 
   Token *list_item_2 = CHILD(nested_list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_2));
-  ASSERT_STR_EQ("two", CONTENT(list_item_2));
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_2));
+  ASSERT_STR_EQ("two", CHILD_CONTENT(list_item_2, 0));
+  ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(list_item_2));
 
-  Token *nested_list_2 = CHILD(list_item_2, 0);
+  Token *nested_list_2 = CHILD(list_item_2, 1);
   ASSERT_INT_EQUALS(LIST, TYPE(nested_list_2));
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(nested_list_2));
 
   Token *list_item_3 = CHILD(nested_list_2, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_3));
-  ASSERT_STR_EQ("three", CONTENT(list_item_3));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(list_item_3));
+  ASSERT_STR_EQ("three", CHILD_CONTENT(list_item_3, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_3));
 
   Token *list_item_4 = CHILD(nested_list, 1);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_4));
-  ASSERT_STR_EQ("four", CONTENT(list_item_4));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(list_item_4));
+  ASSERT_STR_EQ("four", CHILD_CONTENT(list_item_4, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_4));
 
   free_parser_context(&ctx);
 
@@ -185,22 +198,22 @@ TEST(list_complex_indentation) {
 
   Token *list_item = CHILD(list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item));
-  ASSERT_STR_EQ("one", CONTENT(list_item));
-  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item));
+  ASSERT_STR_EQ("one", CHILD_CONTENT(list_item, 0));
+  ASSERT_SIZE_EQUALS(2, NUM_CHILDREN(list_item));
 
-  Token *nested_list = CHILD(list_item, 0);
+  Token *nested_list = CHILD(list_item, 1);
   ASSERT_INT_EQUALS(LIST, TYPE(nested_list));
   ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(nested_list));
 
   Token *nested_list_item = CHILD(nested_list, 0);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(nested_list_item));
-  ASSERT_STR_EQ("two", CONTENT(nested_list_item));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(nested_list_item));
+  ASSERT_STR_EQ("two", CHILD_CONTENT(nested_list_item, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(nested_list_item));
 
   Token *list_item_2 = CHILD(list, 1);
   ASSERT_INT_EQUALS(LIST_ITEM, TYPE(list_item_2));
-  ASSERT_STR_EQ("three", CONTENT(list_item_2));
-  ASSERT_SIZE_EQUALS(0, NUM_CHILDREN(list_item_2));
+  ASSERT_STR_EQ("three", CHILD_CONTENT(list_item_2, 0));
+  ASSERT_SIZE_EQUALS(1, NUM_CHILDREN(list_item_2));
 
   free_parser_context(&ctx);
 
