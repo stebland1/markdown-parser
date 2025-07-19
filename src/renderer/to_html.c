@@ -54,6 +54,9 @@ char *get_tag_from_type(TokenType type, void *meta) {
 }
 
 int is_self_closing(TokenType type) { return type == IMAGE; }
+int is_code(Token *token) {
+  return token->type == CODE_BLOCK || token->type == CODE_SPAN;
+}
 
 void free_attributes(Attribute *attributes, size_t num_attributes) {
   for (int i = 0; i < num_attributes; i++) {
@@ -95,6 +98,33 @@ int get_attributes(Token *token, Attribute *attributes) {
   return count;
 }
 
+void escape_html_entities(FILE *out, Token *token) {
+  char *p = token->content;
+  while (*p) {
+    switch (*p) {
+    case '<':
+      fputs("&lt;", out);
+      break;
+    case '>':
+      fputs("&gt;", out);
+      break;
+    case '"':
+      fputs("&quot;", out);
+      break;
+    case '\'':
+      fputs("&#39;", out);
+      break;
+    case '&':
+      fputs("&amp;", out);
+      break;
+    default:
+      fputc(*p, out);
+      break;
+    }
+    p++;
+  }
+}
+
 void to_html(Token *root, Token *prev) {
   if (!root) {
     return;
@@ -108,6 +138,7 @@ void to_html(Token *root, Token *prev) {
     if (root->type == CODE_BLOCK) {
       printf("<pre>");
     }
+
     printf("<%s", tag);
     for (int i = 0; i < num_attributes; i++) {
       printf(" %s=\"%s\"", attributes[i].key, attributes[i].value);
@@ -126,7 +157,11 @@ void to_html(Token *root, Token *prev) {
   }
 
   if (root->content) {
-    printf("%s", root->content);
+    if (is_code(root)) {
+      escape_html_entities(stdout, root);
+    } else {
+      printf("%s", root->content);
+    }
   }
 
   for (size_t i = 0; i < root->child_count; i++) {
@@ -135,6 +170,7 @@ void to_html(Token *root, Token *prev) {
 
   if (tag) {
     printf("</%s>", tag);
+
     if (root->type == CODE_BLOCK) {
       printf("</pre>");
     }
