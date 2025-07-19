@@ -16,5 +16,6 @@ int is_punctuation(char c);
 int is_whitespace(char c);
 void classify_delimiter_runs(char *start, char *end, char *line, int *can_open,
                              int *can_close);
+void emphasis_token_to_str(EmphasisData *meta, char *out, size_t out_size);
 
 #endif

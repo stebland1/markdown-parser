@@ -2,8 +2,12 @@
 #include "inline/emphasis.h"
 #include "inline/parser.h"
 #include "inline/stack.h"
+#include "inline/undo.h"
 #include "token.h"
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 InlineElement *process_delimiter(InlineParserContext *ctx) {
   int count = 0;
@@ -18,9 +22,8 @@ InlineElement *process_delimiter(InlineParserContext *ctx) {
   return open_code_span_delimiter;
 }
 
-int push_code_span_into_stack(InlineParserContext *ctx,
-                              InlineElement **children, size_t child_count) {
-  Token *code_span_token = create_token(CODE_SPAN, child_count, NULL, NULL);
+int push_code_span_into_stack(InlineParserContext *ctx, char *content) {
+  Token *code_span_token = create_token(CODE_SPAN, 0, content, NULL);
   if (!code_span_token) {
     return -1;
   }
@@ -38,6 +41,16 @@ int push_code_span_into_stack(InlineParserContext *ctx,
   }
 
   return 0;
+}
+
+char *element_to_markdown(void *item) {
+  InlineElement *element = (InlineElement *)item;
+  switch (element->type) {
+  case TOKEN:
+    return token_to_markdown(element->token);
+  case DELIMITER:
+    return delimiter_to_markdown(&element->delimiter);
+  }
 }
 
 int handle_code_span(InlineParserContext *ctx) {
@@ -61,18 +74,21 @@ int handle_code_span(InlineParserContext *ctx) {
     return 0;
   }
 
-  size_t buf_len = 0;
-  InlineElement *children_buf[MAX_CHLD_BUF_SIZE];
-  // TODO: When grabbing children, any emphasis tags, need turning into text.
-  // So I think we need to recursively grab all of the TEXT tokens and
-  // concatenate them.
-  if (pop_until_delimiter(children_buf, &buf_len, ctx->inline_stack,
+  size_t num_elements = 0;
+  InlineElement *elements_to_flatten[MAX_CHILD_BUF_SIZE];
+  if (pop_until_delimiter(elements_to_flatten, &num_elements, ctx->inline_stack,
                           potential_open) < 0) {
     free_inline_element(cur_delim);
     return -1;
   }
 
-  if (push_code_span_into_stack(ctx, children_buf, buf_len) < 0) {
+  char *markdown = join_items_as_str((void **)elements_to_flatten, num_elements,
+                                     element_to_markdown);
+  if (!markdown) {
+    return -1;
+  }
+
+  if (push_code_span_into_stack(ctx, markdown) < 0) {
     free_inline_element(cur_delim);
     return -1;
   }

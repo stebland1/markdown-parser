@@ -4,5 +4,6 @@
 #include "inline/parser.h"
 
 int handle_code_span(InlineParserContext *ctx);
+int push_code_span_into_stack(InlineParserContext *ctx, char *content);
 
 #endif

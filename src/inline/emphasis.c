@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+void emphasis_token_to_str(EmphasisData *meta, char *out, size_t out_size) {
+  assert(meta->count + 1 <= out_size);
+  memset(out, meta->symbol, meta->count);
+  out[meta->count] = '\0';
+}
+
 int is_matching_inline_delim(void *item, void *userdata) {
   InlineElement *element = (InlineElement *)item;
   Delimiter *target = (Delimiter *)userdata;

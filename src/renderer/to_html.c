@@ -26,6 +26,7 @@ char *get_tag_from_type(TokenType type, void *meta) {
   case IMAGE:
     return "img";
   case CODE_BLOCK:
+  case CODE_SPAN:
     return "code";
   case HEADING: {
     HeadingData heading_meta = *(HeadingData *)meta;
