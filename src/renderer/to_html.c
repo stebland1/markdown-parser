@@ -42,9 +42,9 @@ char *get_tag_from_type(TokenType type, void *meta) {
     case 5:
       return "h5";
     case 6:
+    default:
       return "h6";
     }
-    break;
   }
   default:
     return NULL;
