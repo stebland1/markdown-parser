@@ -28,22 +28,9 @@ typedef enum {
 } LineType;
 
 int classify_line_type(char *line, ParserContext *ctx) {
-  if (*line == '#') {
-    return LINE_TYPE_HEADING;
-  }
-
   char *p = line;
   while (isspace(*line))
     line++;
-
-  if (*p == '\0') {
-    return LINE_TYPE_BLANK;
-  }
-
-  if (!ctx->code_block.parsing && strncmp(p, "```", 3) == 0) {
-    ctx->code_block.parsing = 1;
-    return LINE_TYPE_CODE_BLOCK_OPEN;
-  }
 
   if (ctx->code_block.parsing && strncmp(line, "```", 3) == 0) {
     ctx->code_block.parsing = 0;
@@ -52,6 +39,19 @@ int classify_line_type(char *line, ParserContext *ctx) {
 
   if (ctx->code_block.parsing) {
     return LINE_TYPE_CODE_BLOCK;
+  }
+
+  if (*line == '#') {
+    return LINE_TYPE_HEADING;
+  }
+
+  if (*p == '\0') {
+    return LINE_TYPE_BLANK;
+  }
+
+  if (!ctx->code_block.parsing && strncmp(p, "```", 3) == 0) {
+    ctx->code_block.parsing = 1;
+    return LINE_TYPE_CODE_BLOCK_OPEN;
   }
 
   if (parse_list_item(line, NULL)) {
