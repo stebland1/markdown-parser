@@ -101,9 +101,18 @@ int parse_file(FILE *file, ParserContext *ctx) {
       if (flush_paragraph(ctx) < 0) {
         return -1;
       }
+
       break;
     }
     case LINE_TYPE_HEADING:
+      if (flush_paragraph(ctx) < 0) {
+        return -1;
+      }
+
+      if (flush_list(ctx) < 0) {
+        return -1;
+      }
+
       if (heading_block_start(line, ctx) < 0) {
         return -1;
       }
