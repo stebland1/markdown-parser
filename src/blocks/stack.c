@@ -3,12 +3,9 @@
 #include "token.h"
 #include "utils/stack.h"
 
-int stop_at_non_paragraph(Token *token, void *_) {
-  return token->type != PARAGRAPH;
-}
-
-int stop_at_non_block_quote(Token *token, void *_) {
-  return token->type != BLOCK_QUOTE;
+int stop_at_non_type(Token *token, void *userdata) {
+  TokenType *expected_type = (TokenType *)userdata;
+  return token->type != *expected_type;
 }
 
 int stop_at_non_list(Token *token, void *_) {
@@ -16,7 +13,8 @@ int stop_at_non_list(Token *token, void *_) {
 }
 
 int flush_paragraph(ParserContext *ctx) {
-  return flush_stack(ctx, stop_at_non_paragraph, NULL, NULL);
+  TokenType type = PARAGRAPH;
+  return flush_stack(ctx, stop_at_non_type, NULL, &type);
 }
 
 int add_parent_list_only(ParserContext *ctx, Token *token, void *_) {
@@ -37,7 +35,8 @@ int flush_remaining_blocks(ParserContext *ctx) {
 }
 
 int flush_block_quote(ParserContext *ctx) {
-  return flush_stack(ctx, stop_at_non_block_quote, NULL, NULL);
+  TokenType type = BLOCK_QUOTE;
+  return flush_stack(ctx, stop_at_non_type, NULL, &type);
 }
 
 int flush_stack(ParserContext *ctx, FlushPredicate stop_when,
