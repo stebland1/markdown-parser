@@ -17,6 +17,7 @@ typedef enum {
   IMAGE,
   ITALIC,
   BLOCK_QUOTE,
+  THEMATIC_BREAK,
   CODE_BLOCK,
   CODE_SPAN,
   UNKNOWN,

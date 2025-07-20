@@ -5,6 +5,7 @@
 #include "blocks/list.h"
 #include "blocks/paragraph.h"
 #include "blocks/stack.h"
+#include "blocks/thematic_break.h"
 #include "context.h"
 #include "token.h"
 #include "utils/debug.h"
@@ -27,12 +28,35 @@ typedef enum {
   LINE_TYPE_CODE_BLOCK,
   LINE_TYPE_CODE_BLOCK_CLOSE,
   LINE_TYPE_CODE_BLOCK_OPEN,
+  LINE_TYPE_THEMATIC_BREAK,
 } LineType;
+
+int is_thematic_break(char *p, ParserContext *ctx) {
+  char c = *p;
+  if (c != '-' && c != '_' && c != '*') {
+    return 0;
+  }
+
+  int count = 0;
+  while (*p == c) {
+    count++;
+    p++;
+  }
+
+  return *p == '\0' && count >= 3;
+}
 
 int classify_line_type(char *line, ParserContext *ctx) {
   char *p = line;
-  while (isspace(*line))
+  int indentation = 0;
+  while (isspace(*line)) {
+    indentation++;
     line++;
+  }
+
+  if (indentation <= 3 && is_thematic_break(line, ctx)) {
+    return LINE_TYPE_THEMATIC_BREAK;
+  }
 
   if (ctx->code_block.parsing && strncmp(line, "```", 3) == 0) {
     ctx->code_block.parsing = 0;
@@ -109,6 +133,16 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
       break;
     }
+    case LINE_TYPE_THEMATIC_BREAK:
+      if (flush_paragraph(ctx) < 0 || flush_list(ctx) < 0 ||
+          flush_block_quote(ctx) < 0) {
+        return -1;
+      }
+
+      if (handle_thematic_break(ctx) < 0) {
+        return -1;
+      }
+      break;
     case LINE_TYPE_BLOCK_QUOTE: {
       if (flush_paragraph(ctx) < 0 || flush_list(ctx) < 0) {
         return -1;

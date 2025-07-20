@@ -27,6 +27,8 @@ char *get_tag_from_type(TokenType type, void *meta) {
     return "img";
   case BLOCK_QUOTE:
     return "blockquote";
+  case THEMATIC_BREAK:
+    return "hr";
   case CODE_BLOCK:
   case CODE_SPAN:
     return "code";
@@ -55,7 +57,10 @@ char *get_tag_from_type(TokenType type, void *meta) {
   return NULL;
 }
 
-int is_self_closing(TokenType type) { return type == IMAGE; }
+int is_self_closing(TokenType type) {
+  return type == IMAGE || type == THEMATIC_BREAK;
+}
+
 int is_code(Token *token) {
   return token->type == CODE_BLOCK || token->type == CODE_SPAN;
 }
