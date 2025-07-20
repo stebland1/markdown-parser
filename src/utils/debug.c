@@ -41,6 +41,8 @@ char *get_token_type_str(TokenType token_type) {
     return "LINK";
   case IMAGE:
     return "IMAGE";
+  case BLOCK_QUOTE:
+    return "BLOCK_QUOTE";
   case CODE_BLOCK:
     return "CODE_BLOCK";
   case CODE_SPAN:

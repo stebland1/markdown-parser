@@ -16,6 +16,7 @@ typedef enum {
   LIST_ITEM,
   IMAGE,
   ITALIC,
+  BLOCK_QUOTE,
   CODE_BLOCK,
   CODE_SPAN,
   UNKNOWN,

@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "blocks/block_quote.h"
 #include "blocks/code_block.h"
 #include "blocks/heading.h"
 #include "blocks/list.h"
@@ -22,6 +23,7 @@ typedef enum {
   LINE_TYPE_HEADING,
   LINE_TYPE_PARAGRAPH,
   LINE_TYPE_LIST,
+  LINE_TYPE_BLOCK_QUOTE,
   LINE_TYPE_CODE_BLOCK,
   LINE_TYPE_CODE_BLOCK_CLOSE,
   LINE_TYPE_CODE_BLOCK_OPEN,
@@ -43,6 +45,10 @@ int classify_line_type(char *line, ParserContext *ctx) {
 
   if (*line == '#') {
     return LINE_TYPE_HEADING;
+  }
+
+  if (*line == '>') {
+    return LINE_TYPE_BLOCK_QUOTE;
   }
 
   if (*p == '\0') {
@@ -98,18 +104,24 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
     }
     case LINE_TYPE_BLANK: {
-      if (flush_paragraph(ctx) < 0) {
+      if (flush_paragraph(ctx) < 0 || flush_block_quote(ctx) < 0) {
+        return -1;
+      }
+      break;
+    }
+    case LINE_TYPE_BLOCK_QUOTE: {
+      if (flush_paragraph(ctx) < 0 || flush_list(ctx) < 0) {
         return -1;
       }
 
+      if (handle_block_quote(ctx, line) < 0) {
+        return -1;
+      }
       break;
     }
     case LINE_TYPE_HEADING:
-      if (flush_paragraph(ctx) < 0) {
-        return -1;
-      }
-
-      if (flush_list(ctx) < 0) {
+      if (flush_paragraph(ctx) < 0 || flush_list(ctx) < 0 ||
+          flush_block_quote(ctx) < 0) {
         return -1;
       }
 
@@ -118,7 +130,7 @@ int parse_file(FILE *file, ParserContext *ctx) {
       }
       break;
     case LINE_TYPE_LIST: {
-      if (flush_paragraph(ctx) < 0) {
+      if (flush_paragraph(ctx) < 0 || flush_block_quote(ctx) < 0) {
         return -1;
       }
 

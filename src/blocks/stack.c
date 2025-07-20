@@ -7,6 +7,10 @@ int stop_at_non_paragraph(Token *token, void *_) {
   return token->type != PARAGRAPH;
 }
 
+int stop_at_non_block_quote(Token *token, void *_) {
+  return token->type != BLOCK_QUOTE;
+}
+
 int stop_at_non_list(Token *token, void *_) {
   return token->type != LIST && token->type != ORDERED_LIST;
 }
@@ -30,6 +34,10 @@ int flush_list(ParserContext *ctx) {
 
 int flush_remaining_blocks(ParserContext *ctx) {
   return flush_stack(ctx, NULL, add_parent_list_only, NULL);
+}
+
+int flush_block_quote(ParserContext *ctx) {
+  return flush_stack(ctx, stop_at_non_block_quote, NULL, NULL);
 }
 
 int flush_stack(ParserContext *ctx, FlushPredicate stop_when,

@@ -25,6 +25,8 @@ char *get_tag_from_type(TokenType type, void *meta) {
     return "li";
   case IMAGE:
     return "img";
+  case BLOCK_QUOTE:
+    return "blockquote";
   case CODE_BLOCK:
   case CODE_SPAN:
     return "code";
