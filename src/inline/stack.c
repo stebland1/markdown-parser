@@ -4,6 +4,7 @@
 #include "inline/stack.h"
 #include "utils/utils.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -76,10 +77,14 @@ int merge_unmatched_delimiters(InlineElement *delimiter, Stack *inline_stack) {
 
   char buf[MAX_DELIMITER_LEN];
   char *p = buf;
+  size_t len = 0;
   if (delimiter->delimiter.prefix) {
-    memset(p++, delimiter->delimiter.prefix, 1);
+    *p++ = delimiter->delimiter.prefix;
+    len++;
   }
   memset(p, delimiter->delimiter.symbol, delimiter->delimiter.count);
+  len += delimiter->delimiter.count;
+  buf[len] = '\0';
 
   if (prev && next) {
     char *new_content =
