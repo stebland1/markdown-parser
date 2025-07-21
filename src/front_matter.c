@@ -114,8 +114,12 @@ void print_front_matter(FrontMatterList *list) {
       printf("]");
       break;
     case STRING_VAL:
-      printf("\"%s\"%s", entry.string_value, i < list->count - 1 ? "," : "");
+      printf("\"%s\"", entry.string_value);
       break;
+    }
+
+    if (i < list->count - 1) {
+      printf(",");
     }
   }
   printf("}");
