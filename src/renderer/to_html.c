@@ -132,7 +132,50 @@ void escape_html_entities(FILE *out, Token *token) {
   }
 }
 
-void to_html(Token *root, Token *prev) {
+void print_indent(int level) {
+  for (size_t i = 0; i < level; i++) {
+    printf("  ");
+  }
+}
+
+int is_block_element(TokenType type) {
+  return type == PARAGRAPH || type == ORDERED_LIST || type == LIST ||
+         type == BLOCK_QUOTE || type == HEADING || type == THEMATIC_BREAK ||
+         type == DOCUMENT;
+}
+
+void render_as_html(Token *root, HtmlParserUserOptions user_opts) {
+  HtmlParserOptions opts = {
+      .user = user_opts,
+      .is_last = 0,
+      .is_first = 1,
+      .level = 0,
+      .has_nested_list = 0,
+  };
+  return to_html(root, &opts);
+}
+
+void render_children(Token *root, HtmlParserOptions *opts) {
+  for (size_t i = 0; i < root->child_count; i++) {
+    Token *child = root->children[i];
+    HtmlParserOptions child_opts = {
+        .user = opts->user,
+        .level = opts->level + 1,
+        .is_last = i == root->child_count - 1,
+        .is_first = i == 0,
+        .has_nested_list = 0,
+    };
+    if (opts->user.pretty && !child_opts.is_first &&
+        (child->type == LIST || child->type == ORDERED_LIST) &&
+        root->type == LIST_ITEM) {
+      opts->has_nested_list = 1;
+      printf("\n");
+    }
+    to_html(root->children[i], &child_opts);
+  }
+}
+
+void to_html(Token *root, HtmlParserOptions *opts) {
   if (!root) {
     return;
   }
@@ -140,46 +183,82 @@ void to_html(Token *root, Token *prev) {
   Attribute attributes[20];
   int num_attributes = get_attributes(root, attributes);
   char *tag = get_tag_from_type(root->type, root->meta);
+  int is_block = is_block_element(root->type);
 
   if (tag) {
     if (root->type == CODE_BLOCK) {
       printf("<pre>");
     }
 
+    if (opts->user.pretty && (is_block || root->type == LIST_ITEM)) {
+      print_indent(opts->level);
+    }
     printf("<%s", tag);
     for (int i = 0; i < num_attributes; i++) {
       printf(" %s=\"%s\"", attributes[i].key, attributes[i].value);
     }
     if (is_self_closing(root->type)) {
       printf("/>");
+      if (opts->user.pretty && is_block) {
+        printf("\n");
+      }
       free_attributes(attributes, num_attributes);
       return;
     } else {
       printf(">");
+      if (opts->user.pretty && is_block) {
+        printf("\n");
+      }
     }
   }
 
-  if (root->type == LINE && prev && prev->type == LINE) {
-    printf(" ");
+  if (root->type == LINE) {
+    if (opts->user.pretty && opts->is_first) {
+      print_indent(opts->level);
+    } else if (opts->is_last) {
+      printf(" ");
+    }
   }
 
   if (root->content) {
+    if (opts->user.pretty && is_block) {
+      print_indent(opts->level + 1);
+    }
+
     if (is_code(root)) {
       escape_html_entities(stdout, root);
     } else {
       printf("%s", root->content);
     }
+
+    if (opts->user.pretty && is_block) {
+      printf("\n");
+    }
   }
 
-  for (size_t i = 0; i < root->child_count; i++) {
-    to_html(root->children[i], i > 0 ? root->children[i - 1] : NULL);
+  render_children(root, opts);
+
+  if (root->type == LINE && opts->user.pretty && opts->is_last) {
+    printf("\n");
   }
 
   if (tag) {
+    if (opts->user.pretty && (is_block || opts->has_nested_list)) {
+      print_indent(opts->level);
+    }
+
     printf("</%s>", tag);
+
+    if (opts->user.pretty && (is_block || root->type == LIST_ITEM)) {
+      printf("\n");
+    }
 
     if (root->type == CODE_BLOCK) {
       printf("</pre>");
+
+      if (opts->user.pretty) {
+        printf("\n");
+      }
     }
   }
 
