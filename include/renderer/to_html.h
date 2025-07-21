@@ -10,6 +10,7 @@ typedef struct Attribute {
 
 typedef struct HtmlParserUserOptions {
   int pretty;
+  int omit_body;
 } HtmlParserUserOptions;
 
 typedef struct HtmlParserOptions {

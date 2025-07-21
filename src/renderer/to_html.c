@@ -160,7 +160,8 @@ void render_children(Token *root, HtmlParserOptions *opts) {
     Token *child = root->children[i];
     HtmlParserOptions child_opts = {
         .user = opts->user,
-        .level = opts->level + 1,
+        .level = opts->level +
+                 (opts->user.omit_body && root->type == DOCUMENT ? 0 : 1),
         .is_last = i == root->child_count - 1,
         .is_first = i == 0,
         .has_nested_list = 0,
@@ -180,12 +181,18 @@ void to_html(Token *root, HtmlParserOptions *opts) {
     return;
   }
 
+  if (opts->user.omit_body && root->type == DOCUMENT) {
+    render_children(root, opts);
+    return;
+  }
+
   Attribute attributes[20];
   int num_attributes = get_attributes(root, attributes);
   char *tag = get_tag_from_type(root->type, root->meta);
   int is_block = is_block_element(root->type);
 
   if (tag) {
+
     if (root->type == CODE_BLOCK) {
       printf("<pre>");
     }
