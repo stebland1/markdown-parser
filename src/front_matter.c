@@ -126,12 +126,7 @@ void print_front_matter(FrontMatterList *list) {
 }
 
 char *get_list_item(char *line) {
-  if (!isspace(*line))
-    return NULL;
-
   char *p = line;
-  while (isspace(*p))
-    p++;
   if (*p++ != '-')
     return NULL;
   while (isspace(*p))
