@@ -54,6 +54,18 @@ int classify_line_type(char *line, ParserContext *ctx) {
     line++;
   }
 
+  if (!ctx->in_front_matter && strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
+    ctx->in_front_matter = 1;
+    return LINE_TYPE_FRONT_MATTER;
+  }
+
+  if (ctx->in_front_matter) {
+    if (strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
+      ctx->in_front_matter = 0;
+    }
+    return LINE_TYPE_FRONT_MATTER;
+  }
+
   if (indentation <= 3 && is_thematic_break(line, ctx)) {
     return LINE_TYPE_THEMATIC_BREAK;
   }
@@ -86,18 +98,6 @@ int classify_line_type(char *line, ParserContext *ctx) {
 
   if (parse_list_item(line, NULL)) {
     return LINE_TYPE_LIST;
-  }
-
-  if (!ctx->in_front_matter && strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
-    ctx->in_front_matter = 1;
-    return LINE_TYPE_FRONT_MATTER;
-  }
-
-  if (ctx->in_front_matter) {
-    if (strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
-      ctx->in_front_matter = 0;
-    }
-    return LINE_TYPE_FRONT_MATTER;
   }
 
   return LINE_TYPE_PARAGRAPH;
