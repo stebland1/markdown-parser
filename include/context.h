@@ -7,10 +7,16 @@
 #include "token.h"
 #include "utils/stack.h"
 
+typedef enum {
+  FRONT_MATTER_NONE,
+  FRONT_MATTER_IN,
+  FRONT_MATTER_DONE
+} FrontMatterState;
+
 typedef struct {
   Stack block_stack;
   Token *ast;
-  int in_front_matter;
+  FrontMatterState front_matter_state;
   struct CodeBlock {
     int parsing;
     char buf[MAX_CODE_BLOCK_SIZE];

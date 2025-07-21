@@ -54,14 +54,15 @@ int classify_line_type(char *line, ParserContext *ctx) {
     line++;
   }
 
-  if (!ctx->in_front_matter && strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
-    ctx->in_front_matter = 1;
+  if (ctx->front_matter_state == FRONT_MATTER_NONE &&
+      strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
+    ctx->front_matter_state = FRONT_MATTER_IN;
     return LINE_TYPE_FRONT_MATTER;
   }
 
-  if (ctx->in_front_matter) {
+  if (ctx->front_matter_state == FRONT_MATTER_IN) {
     if (strncmp(line, FRONT_MATTER_DELIM, 3) == 0) {
-      ctx->in_front_matter = 0;
+      ctx->front_matter_state = FRONT_MATTER_DONE;
     }
     return LINE_TYPE_FRONT_MATTER;
   }
