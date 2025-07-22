@@ -43,7 +43,6 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   cur->key = escaped_key;
 
   char *value = delimiter + 1;
-  value[strcspn(value, "\n")] = '\0';
   trim(value);
 
   if (*value == '\0') {
@@ -97,9 +96,7 @@ char *get_list_item(char *line) {
   while (isspace(*p))
     p++;
 
-  p[strcspn(p, "\n")] = '\0';
   trim(p);
-
   return strip_double_quotes(p);
 }
 
@@ -130,6 +127,7 @@ int parse_front_matter_file(FILE *file, FrontMatterEntries *entries) {
   char line[MAX_LINES];
 
   while (fgets(line, sizeof(line), file)) {
+    line[strcspn(line, "\n")] = '\0';
     trim(line);
 
     if (state == OUTSIDE) {
