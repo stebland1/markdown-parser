@@ -10,9 +10,9 @@
 #define PARSE_OK 0
 
 typedef enum {
-  OUTSIDE,
-  IN_FRONT_MATTER,
-  IN_LIST,
+  IDLE,
+  PARSING,
+  DONE,
 } ParseState;
 
 void print_front_matter(FrontMatterEntries *entries);

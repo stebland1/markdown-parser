@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void init_list_entry(FrontMatterEntry *entry) {
+  entry->type = LIST_VAL;
+  entry->list_value.items = NULL;
+  entry->list_value.count = 0;
+  entry->list_value.capacity = 0;
+}
+
 char *get_list_item(char *line) {
   char *p = line;
   if (*p++ != '-')

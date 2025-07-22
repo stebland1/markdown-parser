@@ -30,7 +30,7 @@ int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
   trim(value);
 
   if (*value == '\0') {
-    entry->type = LIST_VAL;
+    init_list_entry(entry);
     return PARSE_OK;
   }
 
@@ -73,61 +73,78 @@ void print_front_matter(FrontMatterEntries *entries) {
   printf("}");
 }
 
+ParseState handle_idle(char *line) {
+  if (*line == '\0') {
+    return IDLE;
+  }
+
+  if (strcmp(line, "---") == 0) {
+    return PARSING;
+  }
+
+  return DONE;
+};
+
+int handle_parsing(ParseState *state, FrontMatterEntries *entries, char *line) {
+  if (strcmp(line, "---") == 0) {
+    *state = DONE;
+    return 0;
+  }
+
+  if (entries->count > 0 &&
+      entries->items[entries->count - 1].type == LIST_VAL) {
+    char *list_item = get_list_item(line);
+    if (list_item) {
+      FrontMatterEntry *list_entry = &entries->items[entries->count - 1];
+      if (add_list_item(list_entry, list_item) < 0) {
+        fprintf(stderr, "Failed to add list item\n");
+        return -1;
+      }
+
+      return 0;
+    }
+    // fall through
+  }
+
+  FrontMatterEntry entry;
+  switch (parse_front_matter_entry(&entry, line)) {
+  case PARSE_SKIP:
+    return 0;
+  case PARSE_ERROR:
+    return -1;
+  }
+
+  if (insert_front_matter_entry(entries, &entry) < 0) {
+    fprintf(stderr, "Failed to insert front matter entry\n");
+    return -1;
+  }
+
+  return 0;
+}
+
 int parse_front_matter_file(FILE *file, FrontMatterEntries *entries) {
-  ParseState state = OUTSIDE;
+  ParseState state = IDLE;
   char line[MAX_LINES];
 
   while (fgets(line, sizeof(line), file)) {
     line[strcspn(line, "\n")] = '\0';
     trim(line);
 
-    if (state == OUTSIDE) {
-      if (*line == '\0')
-        continue;
-      if (strcmp(line, "---") == 0) {
-        state = IN_FRONT_MATTER;
-        continue;
-      } else {
-        break;
+    switch (state) {
+    case IDLE:
+      state = handle_idle(line);
+      break;
+    case PARSING:
+      if (handle_parsing(&state, entries, line) < 0) {
+        return -1;
       }
-    }
-
-    if (strcmp(line, "---") == 0) {
+      break;
+    case DONE:
       break;
     }
 
-    if (state == IN_LIST) {
-      char *list_item = get_list_item(line);
-      if (list_item) {
-        FrontMatterEntry *list_entry = &entries->items[entries->count - 1];
-        if (add_list_item(list_entry, list_item) < 0) {
-          fprintf(stderr, "Failed to add list item\n");
-          return -1;
-        }
-        continue;
-      } else {
-        state = IN_FRONT_MATTER;
-      }
-    }
-
-    FrontMatterEntry entry;
-    switch (parse_front_matter_entry(&entry, line)) {
-    case PARSE_SKIP:
-      continue;
-    case PARSE_ERROR:
-      return -1;
-    }
-
-    if (entry.type == LIST_VAL && state != IN_LIST) {
-      entry.list_value.items = NULL;
-      entry.list_value.count = 0;
-      entry.list_value.capacity = 0;
-      state = IN_LIST;
-    }
-
-    if (insert_front_matter_entry(entries, &entry) < 0) {
-      fprintf(stderr, "Failed to insert front matter entry\n");
-      return -1;
+    if (state == DONE) {
+      break;
     }
   }
 

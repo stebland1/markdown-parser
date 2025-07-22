@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #define LIST_VALUE_CAPACITY_BUF 4
-#define LIST_ITEM_CAPACITY_BUF 8
+#define ENTRIES_CAPACITY_BUF 8
 
 typedef struct {
   char *key;
