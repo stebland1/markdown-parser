@@ -63,6 +63,22 @@ int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry) {
   return 0;
 }
 
+char *strip_double_quotes(char *str) {
+  if (!str || strlen(str) < 2) {
+    return str;
+  }
+
+  char *start = str;
+  char *end = str + strlen(str) - 1;
+
+  if (*start == '"' && *end == '"') {
+    start++;
+    *end = '\0';
+  }
+
+  return start;
+}
+
 int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   char *delimiter = strchr(line, ':');
   if (delimiter == NULL) {
@@ -87,6 +103,7 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
     return PARSE_OK;
   }
 
+  value = strip_double_quotes(value);
   char *escaped_val = escape_json_str(value);
   if (!escaped_val) {
     free(cur->key);
@@ -134,7 +151,8 @@ char *get_list_item(char *line) {
 
   p[strcspn(p, "\n")] = '\0';
   trim(p);
-  return p;
+
+  return strip_double_quotes(p);
 }
 
 int add_list_item(FrontMatterEntry *entry, char *item) {
