@@ -1,7 +1,7 @@
 #include "front_matter.h"
 #include "front_matter/entries.h"
+#include "front_matter/list.h"
 #include "utils/utils.h"
-#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,23 +11,7 @@
 #define LIST_VALUE_CAPACITY_BUF 4
 #define MAX_LINES 256
 
-char *strip_double_quotes(char *str) {
-  if (!str || strlen(str) < 2) {
-    return str;
-  }
-
-  char *start = str;
-  char *end = str + strlen(str) - 1;
-
-  if (*start == '"' && *end == '"') {
-    start++;
-    *end = '\0';
-  }
-
-  return start;
-}
-
-int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
+int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
   char *delimiter = strchr(line, ':');
   if (delimiter == NULL) {
     return PARSE_SKIP;
@@ -40,25 +24,25 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
     return PARSE_ERROR;
   }
 
-  cur->key = escaped_key;
+  entry->key = escaped_key;
 
   char *value = delimiter + 1;
   trim(value);
 
   if (*value == '\0') {
-    cur->type = LIST_VAL;
+    entry->type = LIST_VAL;
     return PARSE_OK;
   }
 
   value = strip_double_quotes(value);
   char *escaped_val = escape_json_str(value);
   if (!escaped_val) {
-    free(cur->key);
+    free(entry->key);
     return PARSE_ERROR;
   }
 
-  cur->string_value = escaped_val;
-  cur->type = STRING_VAL;
+  entry->string_value = escaped_val;
+  entry->type = STRING_VAL;
   return PARSE_OK;
 }
 
@@ -87,39 +71,6 @@ void print_front_matter(FrontMatterEntries *entries) {
     }
   }
   printf("}");
-}
-
-char *get_list_item(char *line) {
-  char *p = line;
-  if (*p++ != '-')
-    return NULL;
-  while (isspace(*p))
-    p++;
-
-  trim(p);
-  return strip_double_quotes(p);
-}
-
-int add_list_item(FrontMatterEntry *entry, char *item) {
-  if (entry->list_value.count == entry->list_value.capacity) {
-    entry->list_value.capacity += LIST_VALUE_CAPACITY_BUF;
-    entry->list_value.items = (char **)realloc(
-        entry->list_value.items, entry->list_value.capacity * sizeof(char *));
-
-    if (!entry->list_value.items) {
-      fprintf(stderr, "Failed to allocate for list items\n");
-      return -1;
-    }
-  }
-
-  char *escaped_list_item = escape_json_str(item);
-  if (!escaped_list_item) {
-    fprintf(stderr, "Failed to allocate for list item\n");
-    return -1;
-  }
-
-  entry->list_value.items[entry->list_value.count++] = escaped_list_item;
-  return 0;
 }
 
 int parse_front_matter_file(FILE *file, FrontMatterEntries *entries) {

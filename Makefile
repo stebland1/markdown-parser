@@ -15,7 +15,8 @@ TESTS_SRC := tests/main.c tests/test.c $(wildcard tests/test_*.c) $(BLOCKS_SRC) 
 FRONT_MATTER_SRC = src/main/front_matter.c \
 									 src/front_matter.c \
 									 src/utils/utils.c \
-									 src/front_matter/entries.c
+									 src/front_matter/entries.c \
+									 src/front_matter/list.c
 MARKDOWN_SRC = src/main/markdown.c \
 							 src/parser.c \
 							 src/context.c \

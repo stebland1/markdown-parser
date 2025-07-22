@@ -6,6 +6,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+char *strip_double_quotes(char *str) {
+  if (!str || strlen(str) < 2) {
+    return str;
+  }
+
+  char *start = str;
+  char *end = str + strlen(str) - 1;
+
+  if (*start == '"' && *end == '"') {
+    start++;
+    *end = '\0';
+  }
+
+  return start;
+}
+
 void trim(char *str) {
   char *start = str;
   for (; isspace(*start); start++)
