@@ -15,7 +15,7 @@ typedef enum {
   IN_LIST,
 } ParseState;
 
-void print_front_matter(FrontMatterList *list);
-int parse_front_matter_file(FILE *file, FrontMatterList *list);
+void print_front_matter(FrontMatterEntries *entries);
+int parse_front_matter_file(FILE *file, FrontMatterEntries *entries);
 
 #endif

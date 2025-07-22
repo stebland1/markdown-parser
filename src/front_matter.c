@@ -9,7 +9,6 @@
 #include <sys/types.h>
 
 #define LIST_VALUE_CAPACITY_BUF 4
-#define LIST_ITEM_CAPACITY_BUF 8
 #define MAX_LINES 256
 
 char *strip_double_quotes(char *str) {
@@ -64,10 +63,10 @@ int parse_front_matter_entry(FrontMatterEntry *cur, char *line) {
   return PARSE_OK;
 }
 
-void print_front_matter(FrontMatterList *list) {
+void print_front_matter(FrontMatterEntries *entries) {
   printf("{");
-  for (size_t i = 0; i < list->count; i++) {
-    FrontMatterEntry entry = list->entries[i];
+  for (size_t i = 0; i < entries->count; i++) {
+    FrontMatterEntry entry = entries->items[i];
     printf("\"%s\": ", entry.key);
 
     switch (entry.type) {
@@ -84,7 +83,7 @@ void print_front_matter(FrontMatterList *list) {
       break;
     }
 
-    if (i < list->count - 1) {
+    if (i < entries->count - 1) {
       printf(",");
     }
   }
@@ -126,7 +125,7 @@ int add_list_item(FrontMatterEntry *entry, char *item) {
   return 0;
 }
 
-int parse_front_matter_file(FILE *file, FrontMatterList *list) {
+int parse_front_matter_file(FILE *file, FrontMatterEntries *entries) {
   ParseState state = OUTSIDE;
   char line[MAX_LINES];
 
@@ -151,7 +150,7 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
     if (state == IN_LIST) {
       char *list_item = get_list_item(line);
       if (list_item) {
-        FrontMatterEntry *list_entry = &list->entries[list->count - 1];
+        FrontMatterEntry *list_entry = &entries->items[entries->count - 1];
         if (add_list_item(list_entry, list_item) < 0) {
           fprintf(stderr, "Failed to add list item\n");
           return -1;
@@ -177,7 +176,7 @@ int parse_front_matter_file(FILE *file, FrontMatterList *list) {
       state = IN_LIST;
     }
 
-    if (insert_front_matter_entry(list, &entry) < 0) {
+    if (insert_front_matter_entry(entries, &entry) < 0) {
       fprintf(stderr, "Failed to insert front matter entry\n");
       return -1;
     }

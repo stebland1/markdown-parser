@@ -1,16 +1,16 @@
 #include "front_matter/entries.h"
 #include <stdlib.h>
 
-FrontMatterList *create_front_matter_list() {
-  FrontMatterList *list = malloc(sizeof(FrontMatterList));
+FrontMatterEntries *create_front_matter_entries() {
+  FrontMatterEntries *list = malloc(sizeof(FrontMatterEntries));
   if (!list) {
     return NULL;
   }
 
   list->capacity = LIST_ITEM_CAPACITY_BUF;
   list->count = 0;
-  list->entries = malloc(sizeof(FrontMatterEntry) * list->capacity);
-  if (!list->entries) {
+  list->items = malloc(sizeof(FrontMatterEntry) * list->capacity);
+  if (!list->items) {
     free(list);
     return NULL;
   }
@@ -18,37 +18,38 @@ FrontMatterList *create_front_matter_list() {
   return list;
 }
 
-void free_front_matter_list(FrontMatterList *list) {
+void free_front_matter_entries(FrontMatterEntries *list) {
   if (!list)
     return;
 
   for (size_t i = 0; i < list->count; i++) {
-    free(list->entries[i].key);
+    free(list->items[i].key);
 
-    if (list->entries[i].type == STRING_VAL) {
-      free(list->entries[i].string_value);
+    if (list->items[i].type == STRING_VAL) {
+      free(list->items[i].string_value);
     } else {
-      for (size_t j = 0; j < list->entries[i].list_value.count; j++) {
-        free(list->entries[i].list_value.items[j]);
+      for (size_t j = 0; j < list->items[i].list_value.count; j++) {
+        free(list->items[i].list_value.items[j]);
       }
-      free(list->entries[i].list_value.items);
+      free(list->items[i].list_value.items);
     }
   }
 
-  free(list->entries);
+  free(list->items);
   free(list);
 }
 
-int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry) {
+int insert_front_matter_entry(FrontMatterEntries *list,
+                              FrontMatterEntry *entry) {
   if (list->count + 1 > list->capacity) {
     list->capacity += LIST_ITEM_CAPACITY_BUF;
-    list->entries =
-        realloc(list->entries, sizeof(FrontMatterEntry) * list->capacity);
-    if (!list->entries) {
+    list->items =
+        realloc(list->items, sizeof(FrontMatterEntry) * list->capacity);
+    if (!list->items) {
       return -1;
     }
   }
 
-  list->entries[list->count++] = *entry;
+  list->items[list->count++] = *entry;
   return 0;
 }

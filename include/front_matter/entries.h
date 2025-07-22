@@ -20,14 +20,15 @@ typedef struct {
 } FrontMatterEntry;
 
 typedef struct {
-  FrontMatterEntry *entries;
+  FrontMatterEntry *items;
   size_t count;
   size_t capacity;
-} FrontMatterList;
+} FrontMatterEntries;
 
-FrontMatterList *create_front_matter_list();
-void free_front_matter_list(FrontMatterList *list);
+FrontMatterEntries *create_front_matter_entries();
+void free_front_matter_entries(FrontMatterEntries *entries);
 int parse_front_matter_entry(FrontMatterEntry *cur, char *line);
-int insert_front_matter_entry(FrontMatterList *list, FrontMatterEntry *entry);
+int insert_front_matter_entry(FrontMatterEntries *entries,
+                              FrontMatterEntry *entry);
 
 #endif
