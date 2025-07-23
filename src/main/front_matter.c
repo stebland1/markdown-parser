@@ -1,5 +1,5 @@
-#include "front_matter.h"
 #include "front_matter/entries.h"
+#include "front_matter/parser.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

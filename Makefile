@@ -13,7 +13,7 @@ INLINE_SRC := $(wildcard src/inline/*.c)
 TESTS_SRC := tests/main.c tests/test.c $(wildcard tests/test_*.c) $(BLOCKS_SRC) $(INLINE_SRC) $(UTILS_SRC) src/token.c src/context.c src/parser.c $(RENDERER_SRC)
 
 FRONT_MATTER_SRC = src/main/front_matter.c \
-									 src/front_matter.c \
+									 src/front_matter/parser.c \
 									 src/utils/utils.c \
 									 src/front_matter/entries.c \
 									 src/front_matter/list.c

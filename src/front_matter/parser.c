@@ -1,4 +1,4 @@
-#include "front_matter.h"
+#include "front_matter/parser.h"
 #include "front_matter/entries.h"
 #include "front_matter/list.h"
 #include "utils/utils.h"
@@ -11,29 +11,18 @@
 #define LIST_VALUE_CAPACITY_BUF 4
 #define MAX_LINES 256
 
-int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
-  char *delimiter = strchr(line, ':');
-  if (delimiter == NULL) {
-    return PARSE_SKIP;
-  }
-
-  *delimiter = '\0';
-  trim(line);
-  char *escaped_key = escape_json_str(line);
+int parse_key(char *key, FrontMatterEntry *entry) {
+  trim(key);
+  char *escaped_key = escape_json_str(key);
   if (!escaped_key) {
     return PARSE_ERROR;
   }
 
   entry->key = escaped_key;
+  return PARSE_OK;
+}
 
-  char *value = delimiter + 1;
-  trim(value);
-
-  if (*value == '\0') {
-    init_list_entry(entry);
-    return PARSE_OK;
-  }
-
+int parse_string_value(char *value, FrontMatterEntry *entry) {
   value = strip_double_quotes(value);
   char *escaped_val = escape_json_str(value);
   if (!escaped_val) {
@@ -43,6 +32,37 @@ int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
 
   entry->string_value = escaped_val;
   entry->type = STRING_VAL;
+  return PARSE_OK;
+}
+
+int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
+  char *delimiter = strchr(line, ':');
+  if (delimiter == NULL) {
+    return PARSE_SKIP;
+  }
+  *delimiter = '\0';
+
+  if (parse_key(line, entry) < 0) {
+    return PARSE_ERROR;
+  }
+
+  // Prepare value for parsing.
+  char *value = delimiter + 1;
+  trim(value);
+
+  // This may be a YAML list.
+  if (*value == '\0') {
+    init_list_entry(entry);
+    return PARSE_OK;
+  }
+
+  // TODO: check for surrounding [], if it's an array.
+  // we should, reconstruct it, with the values escaped.
+
+  if (parse_string_value(value, entry) < 0) {
+    return PARSE_ERROR;
+  }
+
   return PARSE_OK;
 }
 
