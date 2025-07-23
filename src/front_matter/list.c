@@ -56,7 +56,6 @@ int is_list_as_string(char *value) {
 }
 
 int parse_string_as_list(char *p, FrontMatterEntry *entry) {
-  printf("%s\n", p);
   p++;
   while (*p) {
     if (*p != '"') {

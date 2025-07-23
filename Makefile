@@ -16,6 +16,7 @@ FRONT_MATTER_SRC = src/main/front_matter.c \
 									 src/front_matter/parser.c \
 									 src/utils/utils.c \
 									 src/front_matter/entries.c \
+									 src/front_matter/renderer.c \
 									 src/front_matter/list.c
 MARKDOWN_SRC = src/main/markdown.c \
 							 src/parser.c \
