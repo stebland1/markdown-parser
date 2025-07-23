@@ -56,8 +56,15 @@ int parse_front_matter_entry(FrontMatterEntry *entry, char *line) {
     return PARSE_OK;
   }
 
-  // TODO: check for surrounding [], if it's an array.
-  // we should, reconstruct it, with the values escaped.
+  // This may be a json style list.
+  if (is_list_as_string(value)) {
+    init_list_entry(entry);
+    if (parse_string_as_list(value, entry) < 0) {
+      return PARSE_ERROR;
+    }
+
+    return PARSE_OK;
+  }
 
   if (parse_string_value(value, entry) < 0) {
     return PARSE_ERROR;

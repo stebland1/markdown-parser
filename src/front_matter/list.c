@@ -1,8 +1,10 @@
 #include "front_matter/entries.h"
+#include "front_matter/parser.h"
 #include "utils/utils.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void init_list_entry(FrontMatterEntry *entry) {
   entry->type = LIST_VAL;
@@ -42,4 +44,50 @@ int add_list_item(FrontMatterEntry *entry, char *item) {
 
   entry->list_value.items[entry->list_value.count++] = escaped_list_item;
   return 0;
+}
+
+int is_list_as_string(char *value) {
+  size_t len = strlen(value);
+  if (len < 2) {
+    return 0;
+  }
+
+  return *value == '[' && value[len - 1] == ']';
+}
+
+int parse_string_as_list(char *p, FrontMatterEntry *entry) {
+  printf("%s\n", p);
+  p++;
+  while (*p) {
+    if (*p != '"') {
+      return PARSE_ERROR;
+    }
+
+    p++;
+    char *start = p;
+    while (*p && *p != '"') {
+      p++;
+    }
+    if (*p != '"') {
+      return PARSE_ERROR;
+    }
+
+    *p = '\0';
+
+    if (add_list_item(entry, start) < 0) {
+      return PARSE_ERROR;
+    }
+
+    p++;
+
+    while (isspace(*p) || *p == ',') {
+      p++;
+    }
+
+    if (*p == ']') {
+      break;
+    }
+  }
+
+  return PARSE_OK;
 }
