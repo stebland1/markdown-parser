@@ -58,27 +58,28 @@ int is_list_as_string(char *value) {
 int parse_string_as_list(char *p, FrontMatterEntry *entry) {
   p++;
   while (*p) {
-    if (*p != '"') {
-      return PARSE_ERROR;
-    }
-
-    p++;
-    char *start = p;
-    while (*p && *p != '"') {
+    int quoted = 0;
+    if (*p == '"') {
+      quoted = 1;
       p++;
     }
-    if (*p != '"') {
+
+    char *start = p;
+    while (*p &&
+           ((quoted && *p != '"') || (!quoted && (*p != ',' && *p != ']')))) {
+      p++;
+    }
+
+    if (quoted && *p != '"') {
       return PARSE_ERROR;
     }
 
     *p = '\0';
-
     if (add_list_item(entry, start) < 0) {
       return PARSE_ERROR;
     }
 
     p++;
-
     while (isspace(*p) || *p == ',') {
       p++;
     }
